@@ -1,0 +1,48 @@
+{
+  "complaints": [
+    {
+      "id": "1",
+      "title": "Slow System Response",
+      "description": "The system takes too long to load dashboard pages",
+      "status": "Open",
+      "priority": "High",
+      "submittedBy": "John Doe",
+      "submittedDate": "2024-03-15",
+      "department": "IT",
+      "category": "Performance"
+    },
+    {
+      "id": "2",
+      "title": "Incorrect Invoice Generation",
+      "description": "System generated wrong amounts in the latest invoice batch",
+      "status": "In Progress",
+      "priority": "Critical",
+      "submittedBy": "Jane Smith",
+      "submittedDate": "2024-03-14",
+      "department": "Finance",
+      "category": "Bug"
+    },
+    {
+      "id": "3",
+      "title": "Login Issues",
+      "description": "Unable to login during peak hours",
+      "status": "Resolved",
+      "priority": "Medium",
+      "submittedBy": "Mike Johnson",
+      "submittedDate": "2024-03-13",
+      "department": "Sales",
+      "category": "Access"
+    },
+    {
+      "id": "4",
+      "title": "Missing Report Features",
+      "description": "Monthly summary report lacks export functionality",
+      "status": "Open",
+      "priority": "Low",
+      "submittedBy": "Sarah Williams",
+      "submittedDate": "2024-03-12",
+      "department": "Operations",
+      "category": "Feature Request"
+    }
+  ]
+} 
