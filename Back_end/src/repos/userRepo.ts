@@ -23,6 +23,7 @@ export const getUserById = async (id: number) => {
 export const findUserByEmail = async (email: string) => {
   try {
     const user = await User.findOne({ where: { email } });
+    console.log("User found by email:", user);
     return user;
   } catch (error) {
     throw error;

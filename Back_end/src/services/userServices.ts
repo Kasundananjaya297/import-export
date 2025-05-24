@@ -35,6 +35,7 @@ export const loginUser = async (user: IUser) => {
       throw new Error("Email and password are required");
     }
     const existingUser = await userRepo.findUserByEmail(user.email);
+    console.log("Existing User:", existingUser);
     if (!existingUser) {
       throw new Error("User not found");
     }

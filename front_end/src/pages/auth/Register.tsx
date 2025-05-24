@@ -118,6 +118,7 @@ const Register: React.FC = () => {
         email: formData.email,
         contact: formData.contact,
         password: formData.password,
+        role: formData.role,
       };
       const res = await register(registerData);
       if (res.status === 201) {
