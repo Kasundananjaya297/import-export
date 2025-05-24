@@ -4,6 +4,8 @@ import { IUser } from "../interfaces/index";
 import * as userRepo from "../repos/userRepo";
 import bcrypt from "bcrypt";
 const soltRounds = 10;
+import jwt from "jsonwebtoken";
+const secretKey = process.env.JWT_SECRET || "defaultSecretKey";
 
 export const createUser = async (user: IUser) => {
   try {
@@ -46,12 +48,19 @@ export const loginUser = async (user: IUser) => {
     if (!isPasswordValid) {
       throw new Error("Invalid password");
     }
+    const jsonwebtoken = jwt.sign(
+      { id: existingUser.getDataValue("id") },
+      secretKey,
+      { expiresIn: "24h" },
+    );
     return {
       id: existingUser.getDataValue("id"),
       fname: existingUser.getDataValue("fname"),
       lname: existingUser.getDataValue("lname"),
       email: existingUser.getDataValue("email"),
       contact: existingUser.getDataValue("contact"),
+      jwt: jsonwebtoken,
+      role: existingUser.getDataValue("role"),
     };
   } catch (error) {
     throw error;

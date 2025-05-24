@@ -35,6 +35,7 @@ export const loginUser = async (
   let response;
   try {
     if (userData) {
+      
       const user = await userService.loginUser(userData);
       //jwt token generation can be added here
       response = responseDTO("success", user, "User logged in successfully");

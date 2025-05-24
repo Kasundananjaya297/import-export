@@ -18,7 +18,6 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-//cors congiguration
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
