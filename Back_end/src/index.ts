@@ -18,6 +18,8 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
+
+
 app.get("/info", (req, res) => {
   res.send({
     PORT: PORT,
