@@ -14,5 +14,5 @@ export interface User {
   email: string;
   contact: string;
   password: string;
+  role: string;
 }
-

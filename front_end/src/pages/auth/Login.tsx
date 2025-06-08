@@ -29,7 +29,6 @@ const Login: React.FC = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
-  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,12 +43,19 @@ const Login: React.FC = () => {
     setError("");
 
     try {
-      const success = await login(email, password);
-
-      if (success) {
+      const response = await login(email, password);
+      if (response) {
+        console.log("response", "asdasdsdasds");
         enqueueSnackbar("Login successful!", { variant: "success" });
-        // Redirect based on role
-        navigate("/importer/dashboard");
+        const currentUserRole = response.data.role;
+
+        if (currentUserRole === "importer") {
+          navigate("/importer/dashboard");
+        } else if (currentUserRole === "exporter") {
+          navigate("/exporter/dashboard");
+        } else if (currentUserRole === "admin") {
+          navigate("/admin/dashboard");
+        }
       } else {
         setError("Invalid email or password");
         enqueueSnackbar("Login failed", { variant: "error" });
@@ -251,9 +257,7 @@ const Login: React.FC = () => {
                   flexWrap: "wrap",
                   gap: 1,
                 }}
-              >
-                
-              </Box>
+              ></Box>
             </Box>
           </Paper>
         </Container>

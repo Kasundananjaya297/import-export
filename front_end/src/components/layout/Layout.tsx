@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+/** @format */
+
+import React, { useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import {
   Box,
   Drawer,
@@ -17,15 +19,15 @@ import {
   MenuItem,
   Divider,
   useMediaQuery,
-  useTheme
-} from '@mui/material';
-import { 
-  Menu as MenuIcon, 
-  ChevronLeft as ChevronLeftIcon
-} from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
-import { getNavItems } from './navigationItems';
-import { useNavigate } from 'react-router-dom';
+  useTheme,
+} from "@mui/material";
+import {
+  Menu as MenuIcon,
+  ChevronLeft as ChevronLeftIcon,
+} from "@mui/icons-material";
+import { useAuth } from "../../context/AuthContext";
+import { getNavItems } from "./navigationItems";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 
@@ -36,9 +38,9 @@ const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
-  const navItems = getNavItems(currentUser?.role || 'importer');
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const navItems = getNavItems(currentUser?.role || "importer");
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -54,54 +56,56 @@ const Layout: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
     handleMenuClose();
   };
 
-  const handleSwitchRole = (role: 'importer' | 'exporter' | 'admin') => {
+  const handleSwitchRole = (role: "importer" | "exporter" | "admin") => {
     switchRole(role);
-    
+
     // Navigate to appropriate dashboard
     switch (role) {
-      case 'importer':
-        navigate('/importer/dashboard');
+      case "importer":
+        navigate("/importer/dashboard");
         break;
-      case 'exporter':
-        navigate('/exporter/dashboard');
+      case "exporter":
+        navigate("/exporter/dashboard");
         break;
-      case 'admin':
-        navigate('/admin/dashboard');
+      case "admin":
+        navigate("/admin/dashboard");
         break;
     }
-    
+
     handleMenuClose();
   };
 
   const getPageTitle = () => {
     const path = location.pathname;
-    
+
     // Extract the last part of the path and convert to title case
-    const pathParts = path.split('/');
+    const pathParts = path.split("/");
     const lastPart = pathParts[pathParts.length - 1];
-    
-    if (lastPart === 'dashboard') {
-      return `${pathParts[1].charAt(0).toUpperCase() + pathParts[1].slice(1)} Dashboard`;
+
+    if (lastPart === "dashboard") {
+      return `${
+        pathParts[1].charAt(0).toUpperCase() + pathParts[1].slice(1)
+      } Dashboard`;
     }
-    
+
     return lastPart
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: "flex" }}>
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: open ? `calc(100% - ${drawerWidth}px)` : '100%' },
+          width: { sm: open ? `calc(100% - ${drawerWidth}px)` : "100%" },
           ml: { sm: open ? `${drawerWidth}px` : 0 },
-          transition: theme.transitions.create(['margin', 'width'], {
+          transition: theme.transitions.create(["margin", "width"], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
@@ -126,7 +130,7 @@ const Layout: React.FC = () => {
             sx={{ ml: 2 }}
           >
             <Avatar
-              alt={currentUser?.name || 'User'}
+              alt={currentUser?.name || "User"}
               src={currentUser?.avatar}
               sx={{ width: 40, height: 40 }}
             />
@@ -138,12 +142,12 @@ const Layout: React.FC = () => {
             PaperProps={{
               elevation: 0,
               sx: {
-                overflow: 'visible',
-                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
+                overflow: "visible",
+                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.1))",
                 mt: 1.5,
                 borderRadius: 2,
                 minWidth: 180,
-                '& .MuiAvatar-root': {
+                "& .MuiAvatar-root": {
                   width: 32,
                   height: 32,
                   ml: -0.5,
@@ -151,24 +155,35 @@ const Layout: React.FC = () => {
                 },
               },
             }}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
-            <MenuItem sx={{ pointerEvents: 'none' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Typography variant="subtitle1">{currentUser?.name}</Typography>
+            <MenuItem sx={{ pointerEvents: "none" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Typography variant="subtitle1">
+                  {currentUser?.fname} {currentUser?.lname}
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {currentUser?.role.charAt(0).toUpperCase() + currentUser?.role.slice(1)}
+                  {currentUser?.role
+                    ? currentUser.role.charAt(0).toUpperCase() +
+                      currentUser.role.slice(1)
+                    : ""}
                 </Typography>
               </Box>
             </MenuItem>
             <Divider />
-            {currentUser?.role === 'admin' && (
+            {currentUser?.role === "admin" && (
               <>
-                <MenuItem onClick={() => handleSwitchRole('importer')}>
+                <MenuItem onClick={() => handleSwitchRole("importer")}>
                   Switch to Importer
                 </MenuItem>
-                <MenuItem onClick={() => handleSwitchRole('exporter')}>
+                <MenuItem onClick={() => handleSwitchRole("exporter")}>
                   Switch to Exporter
                 </MenuItem>
                 <Divider />
@@ -187,18 +202,23 @@ const Layout: React.FC = () => {
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: {
             width: drawerWidth,
-            boxSizing: 'border-box',
+            boxSizing: "border-box",
           },
         }}
       >
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          padding: theme.spacing(0, 1),
-          ...theme.mixins.toolbar,
-          justifyContent: 'space-between'
-        }}>
-          <Typography variant="h6" sx={{ p: 2, fontWeight: 'bold', color: theme.palette.primary.main }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            padding: theme.spacing(0, 1),
+            ...theme.mixins.toolbar,
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ p: 2, fontWeight: "bold", color: theme.palette.primary.main }}
+          >
             Ceylon Trade
           </Typography>
           {isMobile && (
@@ -218,20 +238,18 @@ const Layout: React.FC = () => {
                   if (isMobile) setOpen(false);
                 }}
                 sx={{
-                  borderRadius: '0 20px 20px 0',
+                  borderRadius: "0 20px 20px 0",
                   mr: 1,
                   my: 0.5,
-                  '&.Mui-selected': {
-                    backgroundColor: 'primary.light',
+                  "&.Mui-selected": {
+                    backgroundColor: "primary.light",
                   },
-                  '&.Mui-selected:hover': {
-                    backgroundColor: 'primary.light',
+                  "&.Mui-selected:hover": {
+                    backgroundColor: "primary.light",
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  {item.icon}
-                </ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItemButton>
             </ListItem>
@@ -245,7 +263,7 @@ const Layout: React.FC = () => {
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: 0 },
           p: 3,
-          transition: theme.transitions.create('margin', {
+          transition: theme.transitions.create("margin", {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),

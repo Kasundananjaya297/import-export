@@ -1,4 +1,6 @@
-import React from 'react';
+/** @format */
+
+import React from "react";
 import {
   Box,
   Grid,
@@ -6,15 +8,15 @@ import {
   Paper,
   Divider,
   List,
-  Button
-} from '@mui/material';
+  Button,
+} from "@mui/material";
 import {
   ShoppingCart as ShoppingCartIcon,
   LocalShipping as LocalShippingIcon,
   CheckCircle as CheckCircleIcon,
   Money as MoneyIcon,
-  SupportAgent as SupportAgentIcon
-} from '@mui/icons-material';
+  SupportAgent as SupportAgentIcon,
+} from "@mui/icons-material";
 import {
   BarChart,
   Bar,
@@ -26,38 +28,46 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend
-} from 'recharts';
+  Legend,
+} from "recharts";
 
-import { useAuth } from '../../context/AuthContext';
-import StatCard from '../../components/dashboard/StatCard';
-import ChartContainer from '../../components/dashboard/ChartContainer';
-import RecentActivityItem from '../../components/dashboard/RecentActivityItem';
-import { importerStats } from '../../data/stats';
-import { orders } from '../../data/orders';
-import { complaints } from '../../data/complaints';
+import { useAuth } from "../../context/AuthContext";
+import StatCard from "../../components/dashboard/StatCard";
+import ChartContainer from "../../components/dashboard/ChartContainer";
+import RecentActivityItem from "../../components/dashboard/RecentActivityItem";
+import { importerStats } from "../../data/stats";
+import { orders } from "../../data/orders";
+import { complaints } from "../../data/complaints";
 
-const COLORS = ['#1976D2', '#90CAF9', '#42A5F5', '#64B5F6', '#2196F3'];
+const COLORS = ["#1976D2", "#90CAF9", "#42A5F5", "#64B5F6", "#2196F3"];
 
 const ImporterDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   
+
   // Filter orders for the current user
-  const userOrders = orders.filter(order => order.buyerId === currentUser?.id);
-  
+  const userOrders = orders.filter(
+    (order) => order.buyerId === currentUser?.id,
+  );
+
   // Filter complaints for the current user
-  const userComplaints = complaints.filter(complaint => complaint.buyerId === currentUser?.id);
-  
+  const userComplaints = complaints.filter(
+    (complaint) => complaint.buyerId === currentUser?.id,
+  );
+
   // Get recent orders (last 3)
-  const recentOrders = [...userOrders].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  ).slice(0, 3);
+  const recentOrders = [...userOrders]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .slice(0, 3);
 
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-          Welcome, {currentUser?.name}
+        <Typography variant="h4" sx={{ fontWeight: "bold", mb: 1 }}>
+          Welcome, {currentUser?.fname}
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
           Here's what's happening with your imports
@@ -96,24 +106,26 @@ const ImporterDashboard: React.FC = () => {
             title="Complaints"
             value={userComplaints.length}
             icon={<SupportAgentIcon fontSize="large" />}
-            subtitle={`${userComplaints.filter(c => c.status === 'resolved').length} resolved`}
+            subtitle={`${
+              userComplaints.filter((c) => c.status === "resolved").length
+            } resolved`}
           />
         </Grid>
 
         {/* Order Status Chart */}
         <Grid item xs={12} md={8}>
-          <ChartContainer 
-            title="Orders by Status" 
+          <ChartContainer
+            title="Orders by Status"
             subtitle="Current distribution of your orders"
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
-                  { name: 'Pending', value: importerStats.pendingOrders },
-                  { name: 'Processing', value: importerStats.processingOrders },
-                  { name: 'Shipped', value: importerStats.shippedOrders },
-                  { name: 'Delivered', value: importerStats.deliveredOrders },
-                  { name: 'Cancelled', value: importerStats.cancelledOrders }
+                  { name: "Pending", value: importerStats.pendingOrders },
+                  { name: "Processing", value: importerStats.processingOrders },
+                  { name: "Shipped", value: importerStats.shippedOrders },
+                  { name: "Delivered", value: importerStats.deliveredOrders },
+                  { name: "Cancelled", value: importerStats.cancelledOrders },
                 ]}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
@@ -129,8 +141,8 @@ const ImporterDashboard: React.FC = () => {
 
         {/* Product Categories Pie Chart */}
         <Grid item xs={12} md={4}>
-          <ChartContainer 
-            title="Product Categories" 
+          <ChartContainer
+            title="Product Categories"
             subtitle="Distribution of ordered products"
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -144,10 +156,15 @@ const ImporterDashboard: React.FC = () => {
                   fill="#8884d8"
                   dataKey="count"
                   nameKey="category"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name}: ${(percent * 100).toFixed(0)}%`
+                  }
                 >
                   {importerStats.productCategories.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -163,13 +180,20 @@ const ImporterDashboard: React.FC = () => {
             elevation={0}
             sx={{
               p: 3,
-              height: '100%',
+              height: "100%",
               borderRadius: 2,
-              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.05)'
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: "medium" }}>
                 Recent Orders
               </Typography>
               <Button variant="text" size="small">
@@ -186,20 +210,24 @@ const ImporterDashboard: React.FC = () => {
                     secondaryText={`${order.products.length} products from ${order.sellerName}`}
                     timestamp={order.createdAt}
                     status={
-                      order.status === 'cancelled' 
-                        ? 'error' 
-                        : order.status === 'delivered' 
-                          ? 'success' 
-                          : order.status === 'pending' 
-                            ? 'warning' 
-                            : 'info'
+                      order.status === "cancelled"
+                        ? "error"
+                        : order.status === "delivered"
+                        ? "success"
+                        : order.status === "pending"
+                        ? "warning"
+                        : "info"
                     }
                     statusText={order.status}
                     icon={<ShoppingCartIcon />}
                   />
                 ))
               ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ textAlign: "center", py: 4 }}
+                >
                   No recent orders found
                 </Typography>
               )}
@@ -213,13 +241,20 @@ const ImporterDashboard: React.FC = () => {
             elevation={0}
             sx={{
               p: 3,
-              height: '100%',
+              height: "100%",
               borderRadius: 2,
-              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.05)'
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: "medium" }}>
                 Recent Complaints
               </Typography>
               <Button variant="text" size="small">
@@ -236,18 +271,22 @@ const ImporterDashboard: React.FC = () => {
                     secondaryText={`Order #${complaint.orderNumber} - ${complaint.sellerName}`}
                     timestamp={complaint.createdAt}
                     status={
-                      complaint.status === 'resolved' 
-                        ? 'success' 
-                        : complaint.status === 'open' 
-                          ? 'error' 
-                          : 'warning'
+                      complaint.status === "resolved"
+                        ? "success"
+                        : complaint.status === "open"
+                        ? "error"
+                        : "warning"
                     }
                     statusText={complaint.status}
                     icon={<SupportAgentIcon />}
                   />
                 ))
               ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ textAlign: "center", py: 4 }}
+                >
                   No complaints found
                 </Typography>
               )}

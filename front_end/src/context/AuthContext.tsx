@@ -14,7 +14,7 @@ import { AxiosResponse } from "axios";
 interface AuthContextType {
   currentUser: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<AxiosResponse>;
+  login: (email: string, password: string) => Promise<any>;
   logout: () => void;
   register: (userData: RegisterData) => Promise<AxiosResponse>;
 }
@@ -38,24 +38,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const login = async (
-    email: string,
-    password: string,
-  ): Promise<AxiosResponse> => {
+  const login = async (email: string, password: string): Promise<any> => {
     try {
       const response = await authService.login(email, password);
-      const user = response;
-
-      if (user) {
-        setCurrentUser(user);
+      if (response) {
+        // Store the user data and token
+        const userData = {
+          ...response.data,
+          token: response.data.jwt,
+        };
+        setCurrentUser(userData);
         setIsAuthenticated(true);
-        localStorage.setItem("currentUser", JSON.stringify(user));
+        localStorage.setItem("currentUser", JSON.stringify(userData));
         return response;
       }
-      return response;
+      return null;
     } catch (error) {
       console.error("Login error:", error);
-      return error as AxiosResponse;
+      throw error;
     }
   };
 
