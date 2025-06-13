@@ -17,3 +17,19 @@ export interface IUser {
   password: string;
   role: string;
 }
+
+export interface IProduct {
+  id?: number;
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  minOrderQuantity: number;
+  specifications: string;
+  origin: string;
+  certification: string;
+  images: string[]; // Array of image URLs
+  userId: number;
+}

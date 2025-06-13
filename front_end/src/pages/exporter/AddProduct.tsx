@@ -53,7 +53,7 @@ const AddProduct: React.FC = () => {
     certification: "",
   });
 
-  const [errors, setErrors] = useState<Partial<AddProductData>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -81,7 +81,7 @@ const AddProduct: React.FC = () => {
   };
 
   const validateForm = () => {
-    const newErrors: Partial<AddProductData> = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) newErrors.name = "Product name is required";
     if (!formData.category) newErrors.category = "Category is required";
@@ -288,7 +288,6 @@ const AddProduct: React.FC = () => {
                 component="label"
                 startIcon={<PhotoCamera />}
                 sx={{ mb: 2 }}
-                error={!!errors.images}
               >
                 Upload Product Images
                 <input

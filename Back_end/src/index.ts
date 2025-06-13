@@ -3,7 +3,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import sequelize from "./config/db";
-import userRoutes from "./routs/userRouts";
+import userRoutes from "./routes/userRouts";
+import productRoutes from "./routes/productRoutes";
 import cors from "cors";
 
 dotenv.config();
@@ -51,6 +52,9 @@ app.get("/info", (req, res) => {
 
 // User routes
 app.use("/api/user", userRoutes);
+
+// Product routes
+app.use("/api/products", productRoutes);
 
 // Database connection and server start
 sequelize

@@ -35,6 +35,21 @@ export interface AddProductData {
   certification: string;
 }
 
+// API Request Parameters
+export interface AddProductRequest {
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  minOrderQuantity: number;
+  specifications: string;
+  origin: string;
+  certification: string;
+  images: File[];
+}
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -61,15 +76,30 @@ class ProductService {
   async addProduct(productData: AddProductData): Promise<Product> {
     const formData = new FormData();
 
+    // Convert string values to numbers where needed
+    const requestData: AddProductRequest = {
+      name: productData.name,
+      category: productData.category,
+      description: productData.description,
+      price: parseFloat(productData.price),
+      quantity: parseInt(productData.quantity),
+      unit: productData.unit,
+      minOrderQuantity: parseInt(productData.minOrderQuantity),
+      specifications: productData.specifications,
+      origin: productData.origin,
+      certification: productData.certification,
+      images: productData.images,
+    };
+
     // Append all text fields
-    Object.entries(productData).forEach(([key, value]) => {
+    Object.entries(requestData).forEach(([key, value]) => {
       if (key !== "images") {
-        formData.append(key, value);
+        formData.append(key, value.toString());
       }
     });
 
     // Append images
-    productData.images.forEach((image) => {
+    requestData.images.forEach((image) => {
       formData.append("images", image);
     });
 
