@@ -68,7 +68,7 @@ User.init(
     },
     company: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     password: {
       type: DataTypes.STRING,
