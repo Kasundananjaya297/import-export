@@ -1,7 +1,7 @@
 /** @format */
 
 import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/users";
 
@@ -61,9 +61,9 @@ export const userController = {
       // Generate JWT token
       const token = jwt.sign(
         {
-          id: user.id,
-          email: user.email,
-          role: user.role,
+          id: user.getDataValue("id"),
+          email: user.getDataValue("email"),
+          role: user.getDataValue("role"),
         },
         JWT_SECRET,
         { expiresIn: "24h" },
@@ -71,20 +71,20 @@ export const userController = {
 
       // Remove password from response
       const userResponse = {
-        id: user.id,
-        fname: user.fname,
-        lname: user.lname,
-        gender: user.gender,
-        addressLine1: user.addressLine1,
-        addressLine2: user.addressLine2,
-        city: user.city,
-        state: user.state,
-        zipCode: user.zipCode,
-        country: user.country,
-        email: user.email,
-        contact: user.contact,
-        role: user.role,
-        company: user.company,
+        id: user.getDataValue("id"),
+        fname: user.getDataValue("fname"),
+        lname: user.getDataValue("lname"),
+        gender: user.getDataValue("gender"),
+        addressLine1: user.getDataValue("addressLine1"),
+        addressLine2: user.getDataValue("addressLine2"),
+        city: user.getDataValue("city"),
+        state: user.getDataValue("state"),
+        zipCode: user.getDataValue("zipCode"),
+        country: user.getDataValue("country"),
+        email: user.getDataValue("email"),
+        contact: user.getDataValue("contact"),
+        role: user.getDataValue("role"),
+        company: user.getDataValue("company"),
       };
 
       res.status(201).json({
@@ -116,7 +116,10 @@ export const userController = {
       }
 
       // Check password
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(
+        password,
+        user.getDataValue("password"),
+      );
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
@@ -127,9 +130,9 @@ export const userController = {
       // Generate JWT token
       const token = jwt.sign(
         {
-          id: user.id,
-          email: user.email,
-          role: user.role,
+          id: user.getDataValue("id"),
+          email: user.getDataValue("email"),
+          role: user.getDataValue("role"),
         },
         JWT_SECRET,
         { expiresIn: "24h" },
@@ -137,20 +140,20 @@ export const userController = {
 
       // Remove password from response
       const userResponse = {
-        id: user.id,
-        fname: user.fname,
-        lname: user.lname,
-        gender: user.gender,
-        addressLine1: user.addressLine1,
-        addressLine2: user.addressLine2,
-        city: user.city,
-        state: user.state,
-        zipCode: user.zipCode,
-        country: user.country,
-        email: user.email,
-        contact: user.contact,
-        role: user.role,
-        company: user.company,
+        id: user.getDataValue("id"),
+        fname: user.getDataValue("fname"),
+        lname: user.getDataValue("lname"),
+        gender: user.getDataValue("gender"),
+        addressLine1: user.getDataValue("addressLine1"),
+        addressLine2: user.getDataValue("addressLine2"),
+        city: user.getDataValue("city"),
+        state: user.getDataValue("state"),
+        zipCode: user.getDataValue("zipCode"),
+        country: user.getDataValue("country"),
+        email: user.getDataValue("email"),
+        contact: user.getDataValue("contact"),
+        role: user.getDataValue("role"),
+        company: user.getDataValue("company"),
       };
 
       res.json({
@@ -182,20 +185,20 @@ export const userController = {
 
       // Remove password from response
       const userResponse = {
-        id: user.id,
-        fname: user.fname,
-        lname: user.lname,
-        gender: user.gender,
-        addressLine1: user.addressLine1,
-        addressLine2: user.addressLine2,
-        city: user.city,
-        state: user.state,
-        zipCode: user.zipCode,
-        country: user.country,
-        email: user.email,
-        contact: user.contact,
-        role: user.role,
-        company: user.company,
+        id: user.getDataValue("id"),
+        fname: user.getDataValue("fname"),
+        lname: user.getDataValue("lname"),
+        gender: user.getDataValue("gender"),
+        addressLine1: user.getDataValue("addressLine1"),
+        addressLine2: user.getDataValue("addressLine2"),
+        city: user.getDataValue("city"),
+        state: user.getDataValue("state"),
+        zipCode: user.getDataValue("zipCode"),
+        country: user.getDataValue("country"),
+        email: user.getDataValue("email"),
+        contact: user.getDataValue("contact"),
+        role: user.getDataValue("role"),
+        company: user.getDataValue("company"),
       };
 
       res.json({

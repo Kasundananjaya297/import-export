@@ -1,8 +1,7 @@
 /** @format */
 
 import { Request, Response } from "express";
-import Product from "../models/products";
-import { verifyToken } from "../middleware/auth";
+import * as productRepo from "../repos/productRepo";
 
 export const productController = {
   async create(req: Request, res: Response) {
@@ -19,13 +18,10 @@ export const productController = {
         origin,
         certification,
         images,
+        userId,
       } = req.body;
 
-      // Get user ID from the authenticated request
-      const userId = (req as any).user.id;
-
-      // Create new product
-      const product = await Product.create({
+      const product = await productRepo.createProduct({
         name,
         category,
         description,
@@ -56,7 +52,7 @@ export const productController = {
 
   async getAllProducts(req: Request, res: Response) {
     try {
-      const products = await Product.findAll();
+      const products = await productRepo.getAllProducts();
       res.json({
         success: true,
         data: products,
@@ -73,7 +69,7 @@ export const productController = {
   async getProductById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const product = await Product.findByPk(id);
+      const product = await productRepo.getProductById(Number(id));
 
       if (!product) {
         return res.status(404).json({
@@ -100,9 +96,7 @@ export const productController = {
       const { id } = req.params;
       const userId = (req as any).user.id;
 
-      const product = await Product.findOne({
-        where: { id, userId },
-      });
+      const product = await productRepo.getProductById(Number(id));
 
       if (!product) {
         return res.status(404).json({
@@ -132,9 +126,7 @@ export const productController = {
       const { id } = req.params;
       const userId = (req as any).user.id;
 
-      const product = await Product.findOne({
-        where: { id, userId },
-      });
+      const product = await productRepo.findOneProduct({ id, userId });
 
       if (!product) {
         return res.status(404).json({
@@ -143,7 +135,7 @@ export const productController = {
         });
       }
 
-      await product.destroy();
+      await productRepo.deleteProduct(product);
 
       res.json({
         success: true,
