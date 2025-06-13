@@ -45,22 +45,36 @@ const Login: React.FC = () => {
     try {
       const response = await login(email, password);
       if (response) {
-        console.log("response", "asdasdsdasds");
         enqueueSnackbar("Login successful!", { variant: "success" });
-        const currentUserRole = response.data.role;
 
-        if (currentUserRole === "importer") {
-          navigate("/importer/dashboard");
-        } else if (currentUserRole === "exporter") {
-          navigate("/exporter/dashboard");
-        } else if (currentUserRole === "admin") {
-          navigate("/admin/dashboard");
+        // Get user role from response
+        const userRole = response.data.data.role;
+        console.log("User role:", userRole);
+
+        // Navigate based on user role
+        switch (userRole) {
+          case "importer":
+            navigate("/importer/dashboard");
+            break;
+          case "exporter":
+            navigate("/exporter/dashboard");
+            break;
+          case "admin":
+            navigate("/admin/dashboard");
+            break;
+          default:
+            // If role is not recognized, redirect to home
+            navigate("/");
+            enqueueSnackbar("Unknown user role. Please contact support.", {
+              variant: "warning",
+            });
         }
       } else {
         setError("Invalid email or password");
         enqueueSnackbar("Login failed", { variant: "error" });
       }
     } catch (error) {
+      console.error("Login error:", error);
       setError("An error occurred during login");
       enqueueSnackbar("Login failed", { variant: "error" });
     } finally {
@@ -257,7 +271,14 @@ const Login: React.FC = () => {
                   flexWrap: "wrap",
                   gap: 1,
                 }}
-              ></Box>
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Importer: importer@demo.com / password123
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Exporter: exporter@demo.com / password123
+                </Typography>
+              </Box>
             </Box>
           </Paper>
         </Container>

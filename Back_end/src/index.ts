@@ -4,6 +4,7 @@ import express from "express";
 import dotenv from "dotenv";
 import sequelize from "./config/db";
 import userRoutes from "./routs/userRouts";
+import cors from "cors";
 
 dotenv.config();
 
@@ -13,19 +14,32 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
+// CORS configuration
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:5173"], // Add your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    exposedHeaders: ["Authorization"],
+    maxAge: 86400, // 24 hours
+  }),
+);
+
+// Set security headers
+app.use((req, res, next) => {
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  next();
+});
+
 // Basic routes
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
 //test
-
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
-});
 
 app.get("/info", (req, res) => {
   res.send({
@@ -35,8 +49,8 @@ app.get("/info", (req, res) => {
   });
 });
 
-// User routes - Fix: Pass the router instead of a callback
-app.use("/api/v1/user", userRoutes);
+// User routes
+app.use("/api/user", userRoutes);
 
 // Database connection and server start
 sequelize

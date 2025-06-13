@@ -13,5 +13,6 @@ export interface IUser {
   country: string;
   email: string;
   contact: string;
+  company: string;
   password: string;
 }

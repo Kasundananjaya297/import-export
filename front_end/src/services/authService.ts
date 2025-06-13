@@ -1,8 +1,7 @@
 /** @format */
 
 import axios from "axios";
-
-const API_URL = "http://localhost:3000/api/v1";
+import { API_BASE_URL, API_ENDPOINTS } from "../config";
 
 export interface RegisterData {
   fname: string;
@@ -16,15 +15,40 @@ export interface RegisterData {
   country: string;
   email: string;
   contact: string;
+  company: string;
   password: string;
   role: string;
 }
 
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
 export const authService = {
   async register(data: RegisterData) {
     try {
-      console.log("==========", data);
-      const response = await axios.post(`${API_URL}/user/create`, data);
+      const response = await api.post(API_ENDPOINTS.USER.CREATE, data);
+      if (response.data.jwt) {
+        localStorage.setItem("token", response.data.jwt);
+      }
       return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Registration failed");
@@ -33,14 +57,14 @@ export const authService = {
 
   async login(email: string, password: string) {
     try {
-      const response = await axios.post(`${API_URL}/user/login`, {
+      const response = await api.post(API_ENDPOINTS.USER.LOGIN, {
         email,
         password,
       });
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+      if (response.data.jwt) {
+        localStorage.setItem("token", response.data.jwt);
       }
-      return response.data;
+      return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Login failed");
     }
@@ -50,13 +74,17 @@ export const authService = {
     localStorage.removeItem("token");
   },
 
-  getCurrentUser() {
-    const token = localStorage.getItem("token");
-    if (token) {
-      return axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  async getCurrentUser() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return null;
+      }
+      const response = await api.get(API_ENDPOINTS.USER.GET_CURRENT);
+      return response;
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      return null;
     }
-    return null;
   },
 };

@@ -33,7 +33,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for saved user data in localStorage
     const savedUser = localStorage.getItem("currentUser");
     if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setCurrentUser(parsedUser);
       setIsAuthenticated(true);
     }
   }, []);
@@ -44,8 +45,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response) {
         // Store the user data and token
         const userData = {
-          ...response.data,
+          ...response.data.data,
           token: response.data.jwt,
+          role: response.data.data.role,
         };
         setCurrentUser(userData);
         setIsAuthenticated(true);
@@ -68,15 +70,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData): Promise<AxiosResponse> => {
     try {
-      let response: AxiosResponse;
-      response = await authService.register(userData);
-      // if (response.status === 200) {
-      //   response = await login(userData.email, userData.password);
-      // }
+      const response = await authService.register(userData);
       return response;
     } catch (error) {
       console.error("Registration error:", error);
-      return error as AxiosResponse;
+      throw error;
     }
   };
 

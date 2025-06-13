@@ -13,6 +13,7 @@ export interface User {
   country: string;
   email: string;
   contact: string;
-  password: string;
+  company: string;
   role: string;
+  token?: string;
 }
