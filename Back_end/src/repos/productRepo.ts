@@ -4,7 +4,6 @@ import Product from "../models/products";
 import { IProduct } from "../interfaces";
 
 export const createProduct = async (product: Omit<IProduct, "id">) => {
-  console.log("test---", product);
   const newProduct = await Product.create(product);
   return newProduct;
 };
