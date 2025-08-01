@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -10,7 +10,12 @@ import {
   Rating,
   Button,
   Chip,
+  IconButton,
 } from "@mui/material";
+import {
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon,
+} from "@mui/icons-material";
 import { Product } from "../../services/productService";
 import StatusBadge from "../common/StatusBadge";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +30,37 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showActions = true,
 }) => {
   const navigate = useNavigate();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const hasMultipleImages = product.images && product.images.length > 1;
+
+  // Auto-carousel functionality
+  useEffect(() => {
+    if (hasMultipleImages && !isPaused) {
+      intervalRef.current = setInterval(() => {
+        setCurrentImageIndex((prev) =>
+          prev === product.images.length - 1 ? 0 : prev + 1,
+        );
+      }, 3000); // Change image every 3 seconds
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [hasMultipleImages, isPaused, product.images.length]);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   const handleOrderClick = () => {
     navigate(`/importer/place-order/${product.id}`);
@@ -33,6 +69,37 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleViewDetails = () => {
     // For a real app, this would navigate to a product details page
     console.log("View details for product:", product.id);
+  };
+
+  const handleNext = () => {
+    if (product.images && product.images.length > 0) {
+      setCurrentImageIndex((prev) =>
+        prev === product.images.length - 1 ? 0 : prev + 1,
+      );
+    }
+  };
+
+  const handlePrevious = () => {
+    if (product.images && product.images.length > 0) {
+      setCurrentImageIndex((prev) =>
+        prev === 0 ? product.images.length - 1 : prev - 1,
+      );
+    }
+  };
+
+  const handleMouseEnter = () => {
+    setIsPaused(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+  };
+
+  const getCurrentImage = () => {
+    if (product.images && product.images.length > 0) {
+      return product.images[currentImageIndex];
+    }
+    return "https://via.placeholder.com/300x200?text=No+Image";
   };
 
   return (
@@ -49,22 +116,144 @@ const ProductCard: React.FC<ProductCardProps> = ({
       }}
       className="product-card"
     >
-      <Box sx={{ position: "relative" }}>
+      <Box
+        sx={{ position: "relative" }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <CardMedia
           component="img"
           height="200"
-          image={
-            product.images && product.images.length > 0
-              ? product.images[0]
-              : "https://via.placeholder.com/300x200?text=No+Image"
-          }
-          alt={product.name}
+          image={getCurrentImage()}
+          alt={`${product.name} - Image ${currentImageIndex + 1}`}
           sx={{ objectFit: "cover" }}
         />
-        <Box sx={{ position: "absolute", top: 12, right: 12 }}>
+
+        {/* Navigation Arrows */}
+        {hasMultipleImages && (
+          <>
+            <IconButton
+              onClick={handlePrevious}
+              sx={{
+                position: "absolute",
+                left: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                bgcolor: "rgba(255, 255, 255, 0.8)",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.9)",
+                },
+                zIndex: 1,
+              }}
+              size="small"
+            >
+              <NavigateBeforeIcon />
+            </IconButton>
+            <IconButton
+              onClick={handleNext}
+              sx={{
+                position: "absolute",
+                right: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                bgcolor: "rgba(255, 255, 255, 0.8)",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.9)",
+                },
+                zIndex: 1,
+              }}
+              size="small"
+            >
+              <NavigateNextIcon />
+            </IconButton>
+          </>
+        )}
+
+        {/* Dots Indicator */}
+        {hasMultipleImages && (
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 8,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              gap: 0.5,
+              zIndex: 1,
+            }}
+          >
+            {product.images.map((_, index) => (
+              <Box
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  bgcolor:
+                    index === currentImageIndex
+                      ? "white"
+                      : "rgba(255, 255, 255, 0.5)",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                  "&:hover": {
+                    bgcolor:
+                      index === currentImageIndex
+                        ? "white"
+                        : "rgba(255, 255, 255, 0.8)",
+                  },
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* Image Counter */}
+        {hasMultipleImages && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              bgcolor: "rgba(0, 0, 0, 0.6)",
+              color: "white",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: "0.75rem",
+              zIndex: 1,
+            }}
+          >
+            {currentImageIndex + 1} / {product.images.length}
+          </Box>
+        )}
+
+        {/* Auto-play Indicator */}
+        {hasMultipleImages && !isPaused && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              bgcolor: "rgba(0, 0, 0, 0.6)",
+              color: "white",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: "0.75rem",
+              zIndex: 1,
+            }}
+          >
+            Auto
+          </Box>
+        )}
+
+        {/* Status Badge */}
+        <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 2 }}>
           <StatusBadge status="active" />
         </Box>
       </Box>
+
       <CardContent
         sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
       >

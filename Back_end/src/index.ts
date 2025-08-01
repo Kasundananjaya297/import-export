@@ -8,6 +8,7 @@ import productRoutes from "./routes/productRoutes";
 import cors from "cors";
 // Import models with associations
 import "./models/index";
+import orderRoutes from "./routes/orderRoutes";
 
 dotenv.config();
 
@@ -62,8 +63,14 @@ app.use("/api/user", userRoutes);
 // Product routes
 app.use("/api/products", productRoutes);
 
+// Order Routes
+
+// app.use("/api/order",orderRoutes)
+
 // Serve static files for uploaded images
 app.use("/shared/uploads", express.static("shared/uploads"));
+
+// app.use("/api/order",orderRoutes);
 
 // Database connection and server start
 sequelize
