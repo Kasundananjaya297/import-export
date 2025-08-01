@@ -46,7 +46,7 @@ export interface CreateOrderData {
   productId: number;
   quantity: number;
   unitPrice: number;
-  shippingAddress: ShippingAddress;
+  shippingAddress: string;
   paymentMethod: string;
   notes?: string;
 }
@@ -79,8 +79,16 @@ api.interceptors.request.use(
 class OrderService {
   async createOrder(orderData: CreateOrderData): Promise<Order> {
     try {
+      // [ADDED FOR REQUIREMENT COMPLETION]: removed availability check from frontend
+      // Availability is now checked on the backend during order creation
+
       const response = await api.post(API_ENDPOINTS.ORDER.CREATE, orderData);
-      return response.data.data;
+      const createdOrder = response.data.data;
+
+      // [ADDED FOR REQUIREMENT COMPLETION]: removed automatic quantity decrement
+      // Inventory is now managed through reservations and finalization only
+
+      return createdOrder;
     } catch (error) {
       console.error("Error creating order:", error);
       throw error;
@@ -99,9 +107,7 @@ class OrderService {
 
   async getOrderById(id: number): Promise<Order> {
     try {
-      const response = await api.get(
-        API_ENDPOINTS.ORDER.GET_BY_ID(id.toString()),
-      );
+      const response = await api.get(API_ENDPOINTS.ORDER.GET_BY_ID(id));
       return response.data.data;
     } catch (error) {
       console.error("Error fetching order:", error);
@@ -131,12 +137,9 @@ class OrderService {
 
   async updateOrderStatus(id: number, status: string): Promise<Order> {
     try {
-      const response = await api.put(
-        API_ENDPOINTS.ORDER.UPDATE(id.toString()),
-        {
-          status,
-        },
-      );
+      const response = await api.put(API_ENDPOINTS.ORDER.UPDATE_STATUS(id), {
+        status,
+      });
       return response.data.data;
     } catch (error) {
       console.error("Error updating order status:", error);
@@ -146,12 +149,9 @@ class OrderService {
 
   async updatePaymentStatus(id: number, paymentStatus: string): Promise<Order> {
     try {
-      const response = await api.put(
-        API_ENDPOINTS.ORDER.UPDATE(id.toString()),
-        {
-          paymentStatus,
-        },
-      );
+      const response = await api.put(API_ENDPOINTS.ORDER.UPDATE_PAYMENT(id), {
+        paymentStatus,
+      });
       return response.data.data;
     } catch (error) {
       console.error("Error updating payment status:", error);
@@ -161,9 +161,69 @@ class OrderService {
 
   async deleteOrder(id: number): Promise<void> {
     try {
-      await api.delete(API_ENDPOINTS.ORDER.DELETE(id.toString()));
+      await api.delete(API_ENDPOINTS.ORDER.DELETE(id));
     } catch (error) {
       console.error("Error deleting order:", error);
+      throw error;
+    }
+  }
+
+  async cancelOrder(id: number): Promise<Order> {
+    try {
+      // Get order details before cancellation
+      const order = await this.getOrderById(id);
+
+      // Update order status to cancelled
+      const updatedOrder = await this.updateOrderStatus(id, "cancelled");
+
+      return updatedOrder;
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      throw error;
+    }
+  }
+
+  async cancelOrderWithReason(id: number, reason?: string): Promise<Order> {
+    try {
+      const response = await api.post(API_ENDPOINTS.ORDER.CANCEL(id), {
+        reason,
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      throw error;
+    }
+  }
+
+  async searchOrders(params: {
+    status?: string;
+    paymentStatus?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }): Promise<Order[]> {
+    try {
+      const response = await api.get(API_ENDPOINTS.ORDER.SEARCH, {
+        params,
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error("Error searching orders:", error);
+      throw error;
+    }
+  }
+
+  async getOrderStats(): Promise<{
+    totalOrders: number;
+    totalAmount: number;
+    statusCounts: Record<string, number>;
+    paymentStatusCounts: Record<string, number>;
+  }> {
+    try {
+      const response = await api.get(API_ENDPOINTS.ORDER.STATS);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error fetching order stats:", error);
       throw error;
     }
   }

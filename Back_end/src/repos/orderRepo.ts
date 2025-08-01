@@ -16,7 +16,36 @@ export const createOrder = async (orderData: any) => {
       orderNumber,
     });
 
-    return order;
+    // [ADDED FOR REQUIREMENT COMPLETION]: fetch order with product details for preview
+    const orderWithDetails = await Order.findByPk(order.getDataValue("id"), {
+      include: [
+        {
+          model: Product,
+          as: "product",
+          attributes: [
+            "id",
+            "name",
+            "category",
+            "price",
+            "unit",
+            "description",
+            "images",
+          ],
+        },
+        {
+          model: User,
+          as: "buyer",
+          attributes: ["id", "fname", "lname", "email", "company"],
+        },
+        {
+          model: User,
+          as: "seller",
+          attributes: ["id", "fname", "lname", "email", "company"],
+        },
+      ],
+    });
+
+    return orderWithDetails;
   } catch (error) {
     throw error;
   }

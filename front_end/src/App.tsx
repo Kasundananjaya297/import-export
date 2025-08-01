@@ -21,6 +21,7 @@ import ProductCatalog from "./pages/importer/ProductCatalog";
 import PlaceOrder from "./pages/importer/PlaceOrder";
 import MyOrders from "./pages/importer/MyOrders";
 import PaymentPage from "./pages/importer/PaymentPage";
+import TestPaymentPage from "./pages/importer/TestPaymentPage";
 import { ComplaintsPage } from "./pages/Complaints";
 
 // Exporter Pages
@@ -107,6 +108,10 @@ function App() {
                       <PaymentPage />
                     </ProtectedRoute>
                   }
+                />
+                <Route
+                  path="/test/payment/:orderId"
+                  element={<TestPaymentPage />}
                 />
 
                 {/* Exporter Routes */}

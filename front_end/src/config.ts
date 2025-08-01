@@ -15,20 +15,20 @@ export const API_ENDPOINTS = {
   PRODUCT: {
     CREATE: "/products/create",
     GET_ALL: "/products/all",
-    GET_BY_USER_ID:"/products",
+    GET_BY_USER_ID: "/products",
     GET_BY_ID: (id: string) => `/products/${id}`,
     UPDATE: (id: string) => `/products/${id}`,
     DELETE: (id: string) => `/products/${id}`,
     GET_SELLER_PRODUCTS: (sellerId: string) => `/products/seller/${sellerId}`,
   },
   ORDER: {
-    CREATE: "/orders",
-    GET_ALL: "/orders",
-    GET_BY_ID: (id: string) => `/orders/${id}`,
-    UPDATE: (id: string) => `/orders/${id}`,
-    DELETE: (id: string) => `/orders/${id}`,
-    GET_BUYER_ORDERS: (buyerId: string) => `/orders/buyer/${buyerId}`,
-    GET_SELLER_ORDERS: (sellerId: string) => `/orders/seller/${sellerId}`,
+    CREATE: "/order/create",
+    GET_ALL: "/order",
+    GET_BY_ID: (id: string) => `/order/${id}`,
+    UPDATE: (id: string) => `/order/${id}`,
+    DELETE: (id: string) => `/order/${id}`,
+    GET_BUYER_ORDERS: (buyerId: string) => `/order/buyer/${buyerId}`,
+    GET_SELLER_ORDERS: (sellerId: string) => `/order/seller/${sellerId}`,
   },
   COMPLAINT: {
     CREATE: "/complaints",
@@ -42,6 +42,12 @@ export const API_ENDPOINTS = {
     GET_ALL: "/transactions",
     GET_BY_ID: (id: string) => `/transactions/${id}`,
     GET_USER_TRANSACTIONS: (userId: string) => `/transactions/user/${userId}`,
+  },
+  PAYMENT: {
+    CREATE: "/create",
+    PROCESS: (paymentId: string) => `/${paymentId}/process`,
+    UPDATE_STATUS: (paymentId: string) => `/${paymentId}/status`,
+    REFUND: (paymentId: string) => `/${paymentId}/refund`,
   },
 };
 

@@ -26,12 +26,22 @@ import {
   FormHelperText,
   Checkbox,
   FormControlLabel,
+  InputAdornment,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   ShoppingCart as ShoppingCartIcon,
   LocalShipping as ShippingIcon,
   Payment as PaymentIcon,
   CheckCircle as CheckCircleIcon,
+  Visibility,
+  VisibilityOff,
+  Inventory as InventoryIcon,
+  CreditCard as CreditCardIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { productService, Product } from "../../services/productService";
@@ -47,6 +57,7 @@ const steps = [
   "Product Details",
   "Order Information",
   "Shipping & Billing",
+  "Payment Details",
   "Review & Confirm",
 ];
 
@@ -62,12 +73,23 @@ const PlaceOrder: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [availabilityChecked, setAvailabilityChecked] = useState(false);
+  const [currentStock, setCurrentStock] = useState<number>(0);
 
   // Form data
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [useSameAddress, setUseSameAddress] = useState(true);
+
+  // Payment form data
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [cardholderName, setCardholderName] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Address data - structured fields
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
@@ -91,7 +113,98 @@ const PlaceOrder: React.FC = () => {
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch product details
+  // [ADDED FOR REQUIREMENT COMPLETION]: order preview state
+  const [createdOrder, setCreatedOrder] = useState<any>(null);
+  const [showOrderPreview, setShowOrderPreview] = useState(false);
+
+  // Credit card validation functions
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+    const matches = v.match(/\d{4,16}/g);
+    const match = (matches && matches[0]) || "";
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(" ");
+    } else {
+      return v;
+    }
+  };
+
+  const formatExpiryDate = (value: string) => {
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+    if (v.length >= 2) {
+      return v.substring(0, 2) + "/" + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  const validateCardNumber = (cardNumber: string) => {
+    const cleanNumber = cardNumber.replace(/\s/g, "");
+    if (cleanNumber.length < 13 || cleanNumber.length > 19) {
+      return "Card number must be between 13 and 19 digits";
+    }
+
+    // Luhn algorithm for card validation
+    let sum = 0;
+    let isEven = false;
+
+    for (let i = cleanNumber.length - 1; i >= 0; i--) {
+      let digit = parseInt(cleanNumber.charAt(i));
+
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) {
+          digit -= 9;
+        }
+      }
+
+      sum += digit;
+      isEven = !isEven;
+    }
+
+    return sum % 10 === 0 ? "" : "Invalid card number";
+  };
+
+  const validateExpiryDate = (expiryDate: string) => {
+    if (!expiryDate) return "Expiry date is required";
+
+    const [month, year] = expiryDate.split("/");
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear() % 100;
+    const currentMonth = currentDate.getMonth() + 1;
+
+    const expMonth = parseInt(month);
+    const expYear = parseInt(year);
+
+    if (expMonth < 1 || expMonth > 12) {
+      return "Invalid month";
+    }
+
+    if (
+      expYear < currentYear ||
+      (expYear === currentYear && expMonth < currentMonth)
+    ) {
+      return "Card has expired";
+    }
+
+    return "";
+  };
+
+  const validateCVV = (cvv: string) => {
+    if (!cvv) return "CVV is required";
+    if (cvv.length < 3 || cvv.length > 4) {
+      return "CVV must be 3 or 4 digits";
+    }
+    if (!/^\d+$/.test(cvv)) {
+      return "CVV must contain only numbers";
+    }
+    return "";
+  };
+
+  // Fetch product details and current stock
   useEffect(() => {
     const fetchProduct = async () => {
       if (!productId) {
@@ -103,6 +216,7 @@ const PlaceOrder: React.FC = () => {
       try {
         const productData = await productService.getProductById(productId);
         setProduct(productData);
+        setCurrentStock(productData.quantity);
         setQuantity(productData.minOrderQuantity.toString());
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -114,6 +228,62 @@ const PlaceOrder: React.FC = () => {
 
     fetchProduct();
   }, [productId]);
+
+  // [ADDED FOR REQUIREMENT COMPLETION]: simplified stock updates without automatic quantity updates
+  useEffect(() => {
+    const updateStock = async () => {
+      if (!productId) return;
+
+      try {
+        const currentStockLevel = await productService.getProductStockLevel(
+          parseInt(productId),
+        );
+        setCurrentStock(currentStockLevel);
+      } catch (error) {
+        console.error("Error updating stock:", error);
+      }
+    };
+
+    // Update stock every 30 seconds (read-only)
+    const interval = setInterval(updateStock, 30000);
+    return () => clearInterval(interval);
+  }, [productId]);
+
+  // Check availability when quantity changes
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!product || !quantity || parseInt(quantity) <= 0) {
+        setAvailabilityChecked(false);
+        return;
+      }
+
+      try {
+        const isAvailable = await productService.checkProductAvailability(
+          product.id,
+          parseInt(quantity),
+        );
+        setAvailabilityChecked(true);
+
+        if (!isAvailable) {
+          setErrors((prev) => ({
+            ...prev,
+            quantity: `Only ${currentStock} ${product.unit} available in stock`,
+          }));
+        } else {
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.quantity;
+            return newErrors;
+          });
+        }
+      } catch (error) {
+        console.error("Error checking availability:", error);
+      }
+    };
+
+    const timeoutId = setTimeout(checkAvailability, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [quantity, product, currentStock]);
 
   // Calculate order summary
   const calculateOrderSummary = () => {
@@ -152,6 +322,9 @@ const PlaceOrder: React.FC = () => {
             product?.minOrderQuantity || 1
           }`;
         }
+        if (product && parseInt(quantity) > currentStock) {
+          newErrors.quantity = `Only ${currentStock} ${product.unit} available in stock`;
+        }
         break;
 
       case 1: // Order Information
@@ -181,6 +354,27 @@ const PlaceOrder: React.FC = () => {
             newErrors.billingPostalCode = "Billing postal code is required";
         }
         break;
+
+      case 3: // Payment Details
+        if (paymentMethod === "credit_card") {
+          const cardError = validateCardNumber(cardNumber);
+          if (cardError) newErrors.cardNumber = cardError;
+
+          const expiryError = validateExpiryDate(expiryDate);
+          if (expiryError) newErrors.expiryDate = expiryError;
+
+          const cvvError = validateCVV(cvv);
+          if (cvvError) newErrors.cvv = cvvError;
+
+          if (!cardholderName)
+            newErrors.cardholderName = "Cardholder name is required";
+        } else if (paymentMethod === "bank_transfer") {
+          if (!bankAccount)
+            newErrors.bankAccount = "Bank account number is required";
+          if (!routingNumber)
+            newErrors.routingNumber = "Routing number is required";
+        }
+        break;
     }
 
     setErrors(newErrors);
@@ -204,38 +398,99 @@ const PlaceOrder: React.FC = () => {
     setError("");
 
     try {
+      // Final availability check before order
+      const isAvailable = await productService.checkProductAvailability(
+        product.id,
+        orderSummary.quantity,
+      );
+
+      if (!isAvailable) {
+        throw new Error(
+          `Only ${currentStock} ${product.unit} available in stock`,
+        );
+      }
+
+      // Format shipping address as a string for backend
+      const formattedShippingAddress = `${shippingAddress.line1}, ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postalCode}, ${shippingAddress.country}`;
+
       const orderData: CreateOrderData = {
         productId: product.id,
         quantity: orderSummary.quantity,
         unitPrice: orderSummary.unitPrice,
-        shippingAddress,
+        shippingAddress: formattedShippingAddress,
         paymentMethod,
         notes,
       };
 
       const order = await orderService.createOrder(orderData);
 
+      // [ADDED FOR REQUIREMENT COMPLETION]: show order preview
+      setCreatedOrder(order);
+      setShowOrderPreview(true);
       enqueueSnackbar("Order placed successfully!", { variant: "success" });
-      navigate(`/importer/payment/${order.id}`);
     } catch (err: any) {
       console.error("Error placing order:", err);
-      setError(
-        err.response?.data?.message ||
-          "Failed to place order. Please try again.",
-      );
-      enqueueSnackbar("Failed to place order", { variant: "error" });
+      setError(err.message || "Failed to place order. Please try again.");
+      enqueueSnackbar(err.message || "Failed to place order", {
+        variant: "error",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleShippingAddressChange = (
-    field: keyof ShippingAddress,
+    field: keyof typeof shippingAddress,
     value: string,
   ) => {
     setShippingAddress((prev) => ({ ...prev, [field]: value }));
     if (useSameAddress) {
       setBillingAddress((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+
+  // Handle card number formatting
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCardNumber(e.target.value);
+    setCardNumber(formatted);
+
+    // Clear error when user starts typing
+    if (errors.cardNumber) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.cardNumber;
+        return newErrors;
+      });
+    }
+  };
+
+  // Handle expiry date formatting
+  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatExpiryDate(e.target.value);
+    setExpiryDate(formatted);
+
+    // Clear error when user starts typing
+    if (errors.expiryDate) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.expiryDate;
+        return newErrors;
+      });
+    }
+  };
+
+  // Handle CVV change
+  const handleCVVChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+    setCvv(value);
+
+    // Clear error when user starts typing
+    if (errors.cvv) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.cvv;
+        return newErrors;
+      });
     }
   };
 
@@ -346,6 +601,18 @@ const PlaceOrder: React.FC = () => {
                           label={`Origin: ${product.origin}`}
                           size="small"
                         />
+
+                        {/* Real-time Stock Information */}
+                        <Box
+                          sx={{ mt: 2, display: "flex", alignItems: "center" }}
+                        >
+                          <InventoryIcon
+                            sx={{ mr: 1, color: "primary.main" }}
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            Current Stock: {currentStock} {product.unit}
+                          </Typography>
+                        </Box>
                       </CardContent>
                     </Card>
                   </Grid>
@@ -360,13 +627,34 @@ const PlaceOrder: React.FC = () => {
                       error={!!errors.quantity}
                       helperText={
                         errors.quantity ||
-                        `Minimum order: ${product.minOrderQuantity} ${product.unit}`
+                        `Minimum order: ${product.minOrderQuantity} ${product.unit} | Available: ${currentStock} ${product.unit}`
                       }
                       InputProps={{
-                        inputProps: { min: product.minOrderQuantity },
+                        inputProps: {
+                          min: product.minOrderQuantity,
+                          max: currentStock,
+                        },
                       }}
                       sx={{ mb: 2 }}
                     />
+
+                    {/* Stock Status */}
+                    {availabilityChecked && (
+                      <Alert
+                        severity={
+                          parseInt(quantity) <= currentStock
+                            ? "success"
+                            : "error"
+                        }
+                        sx={{ mb: 2 }}
+                      >
+                        {parseInt(quantity) <= currentStock
+                          ? `${currentStock - parseInt(quantity)} ${
+                              product.unit
+                            } will remain in stock`
+                          : `Only ${currentStock} ${product.unit} available`}
+                      </Alert>
+                    )}
 
                     <TextField
                       fullWidth
@@ -628,8 +916,135 @@ const PlaceOrder: React.FC = () => {
               </Box>
             )}
 
-            {/* Step 3: Review & Confirm */}
+            {/* Step 3: Payment Details */}
             {activeStep === 3 && (
+              <Box>
+                <Typography variant="h6" sx={{ mb: 3 }}>
+                  Payment Details
+                </Typography>
+
+                {paymentMethod === "credit_card" && (
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Card Number"
+                        value={cardNumber}
+                        onChange={handleCardNumberChange}
+                        error={!!errors.cardNumber}
+                        helperText={
+                          errors.cardNumber || "Enter 16-digit card number"
+                        }
+                        placeholder="1234 5678 9012 3456"
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <CreditCardIcon color="action" />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Expiry Date"
+                        value={expiryDate}
+                        onChange={handleExpiryDateChange}
+                        error={!!errors.expiryDate}
+                        helperText={errors.expiryDate || "MM/YY"}
+                        placeholder="MM/YY"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="CVV"
+                        type={showPassword ? "text" : "password"}
+                        value={cvv}
+                        onChange={handleCVVChange}
+                        error={!!errors.cvv}
+                        helperText={errors.cvv || "3 or 4 digits"}
+                        placeholder="123"
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() => setShowPassword(!showPassword)}
+                                edge="end"
+                              >
+                                {showPassword ? (
+                                  <VisibilityOff />
+                                ) : (
+                                  <Visibility />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Cardholder Name"
+                        value={cardholderName}
+                        onChange={(e) => setCardholderName(e.target.value)}
+                        error={!!errors.cardholderName}
+                        helperText={errors.cardholderName}
+                        placeholder="John Doe"
+                      />
+                    </Grid>
+                  </Grid>
+                )}
+
+                {paymentMethod === "bank_transfer" && (
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Bank Account Number"
+                        value={bankAccount}
+                        onChange={(e) => setBankAccount(e.target.value)}
+                        error={!!errors.bankAccount}
+                        helperText={errors.bankAccount}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Routing Number"
+                        value={routingNumber}
+                        onChange={(e) => setRoutingNumber(e.target.value)}
+                        error={!!errors.routingNumber}
+                        helperText={errors.routingNumber}
+                      />
+                    </Grid>
+                  </Grid>
+                )}
+
+                {paymentMethod === "paypal" && (
+                  <Box>
+                    <Alert severity="info">
+                      You will be redirected to PayPal to complete your payment
+                      after order confirmation.
+                    </Alert>
+                  </Box>
+                )}
+
+                {paymentMethod === "letter_of_credit" && (
+                  <Box>
+                    <Alert severity="info">
+                      Letter of Credit details will be handled separately by our
+                      trade finance team.
+                    </Alert>
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {/* Step 4: Review & Confirm */}
+            {activeStep === 4 && (
               <Box>
                 <Typography variant="h6" sx={{ mb: 3 }}>
                   Review Order Details
@@ -655,6 +1070,10 @@ const PlaceOrder: React.FC = () => {
                         </Typography>
                         <Typography variant="body2">
                           Unit Price: ${parseFloat(product.price).toFixed(2)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Stock after order: {currentStock - parseInt(quantity)}{" "}
+                          {product.unit}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -825,6 +1244,294 @@ const PlaceOrder: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* [ADDED FOR REQUIREMENT COMPLETION]: Order Preview Modal */}
+      <Dialog
+        open={showOrderPreview}
+        onClose={() => setShowOrderPreview(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="h6" color="success.main">
+              ✅ Order Placed Successfully!
+            </Typography>
+            <Chip
+              label={createdOrder?.orderNumber || "Order"}
+              color="primary"
+            />
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {createdOrder && (
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={3}>
+                {/* Order Details */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    Order Details
+                  </Typography>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Order Number:</Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        {createdOrder.orderNumber}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Status:</Typography>
+                      <Chip
+                        label={createdOrder.status}
+                        color={
+                          createdOrder.status === "pending"
+                            ? "warning"
+                            : "success"
+                        }
+                        size="small"
+                      />
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Payment Status:</Typography>
+                      <Chip
+                        label={createdOrder.paymentStatus}
+                        color={
+                          createdOrder.paymentStatus === "pending"
+                            ? "warning"
+                            : "success"
+                        }
+                        size="small"
+                      />
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Total Amount:</Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight="bold"
+                        color="primary"
+                      >
+                        ${parseFloat(createdOrder.totalAmount).toFixed(2)}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Payment Method:</Typography>
+                      <Typography variant="body2">
+                        {createdOrder.paymentMethod
+                          ?.replace("_", " ")
+                          .toUpperCase()}
+                      </Typography>
+                    </Box>
+                  </Card>
+                </Grid>
+
+                {/* Product Details */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    Product Information
+                  </Typography>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Product:</Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        {product?.name}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Quantity:</Typography>
+                      <Typography variant="body2">
+                        {createdOrder.quantity} {product?.unit}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Unit Price:</Typography>
+                      <Typography variant="body2">
+                        ${parseFloat(createdOrder.unitPrice).toFixed(2)}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2">Shipping Address:</Typography>
+                      <Typography variant="body2" sx={{ maxWidth: "60%" }}>
+                        {createdOrder.shippingAddress}
+                      </Typography>
+                    </Box>
+                    {createdOrder.notes && (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="body2">Notes:</Typography>
+                        <Typography variant="body2" sx={{ maxWidth: "60%" }}>
+                          {createdOrder.notes}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Card>
+                </Grid>
+
+                {/* Order Summary */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    Order Summary
+                  </Typography>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="body2">Subtotal:</Typography>
+                          <Typography variant="body2">
+                            $
+                            {(
+                              parseFloat(createdOrder.unitPrice) *
+                              createdOrder.quantity
+                            ).toFixed(2)}
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="body2">Shipping:</Typography>
+                          <Typography variant="body2">
+                            ${orderSummary?.shipping.toFixed(2)}
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="body2">Tax (8%):</Typography>
+                          <Typography variant="body2">
+                            ${orderSummary?.tax.toFixed(2)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Divider sx={{ my: 1 }} />
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Typography variant="h6" fontWeight="bold">
+                            Total:
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            fontWeight="bold"
+                            color="primary"
+                          >
+                            ${parseFloat(createdOrder.totalAmount).toFixed(2)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button variant="outlined" onClick={() => setShowOrderPreview(false)}>
+            Continue Shopping
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setShowOrderPreview(false);
+              navigate(`/importer/payment/${createdOrder.id}`);
+            }}
+          >
+            Proceed to Payment
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setShowOrderPreview(false);
+              navigate("/importer/orders");
+            }}
+          >
+            View My Orders
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

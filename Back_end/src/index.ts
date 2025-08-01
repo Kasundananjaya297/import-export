@@ -5,10 +5,11 @@ import dotenv from "dotenv";
 import sequelize from "./config/db";
 import userRoutes from "./routes/userRouts";
 import productRoutes from "./routes/productRoutes";
+import orderRoutes from "./routes/orderRoutes";
+import paymentRoutes from "./routes/paymentRoutes";
 import cors from "cors";
 // Import models with associations
 import "./models/index";
-import orderRoutes from "./routes/orderRoutes";
 
 dotenv.config();
 
@@ -64,13 +65,13 @@ app.use("/api/user", userRoutes);
 app.use("/api/products", productRoutes);
 
 // Order Routes
+app.use("/api/order", orderRoutes);
 
-// app.use("/api/order",orderRoutes)
+// Payment Routes
+app.use("/api/payment", paymentRoutes);
 
 // Serve static files for uploaded images
 app.use("/shared/uploads", express.static("shared/uploads"));
-
-// app.use("/api/order",orderRoutes);
 
 // Database connection and server start
 sequelize

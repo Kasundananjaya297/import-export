@@ -44,7 +44,7 @@ export const orderController = {
         });
       }
 
-      const sellerId = product.userId;
+      const sellerId = product.getDataValue("userId");
       const totalAmount = parseFloat(unitPrice) * parseInt(quantity);
 
       const orderData = {
@@ -234,6 +234,166 @@ export const orderController = {
       res.status(500).json({
         success: false,
         message: "Error deleting order",
+      });
+    }
+  },
+
+  async cancelOrder(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      const order = await orderRepo.getOrderById(Number(id));
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found",
+        });
+      }
+
+      // Check if order can be cancelled
+      const currentStatus = order.getDataValue("status");
+      if (currentStatus === "delivered" || currentStatus === "cancelled") {
+        return res.status(400).json({
+          success: false,
+          message: `Order cannot be cancelled in ${currentStatus} status`,
+        });
+      }
+
+      // Update order status to cancelled
+      const updatedOrder = await orderRepo.updateOrderStatus(
+        Number(id),
+        "cancelled",
+      );
+
+      res.json({
+        success: true,
+        message: "Order cancelled successfully",
+        data: updatedOrder,
+      });
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error cancelling order",
+      });
+    }
+  },
+
+  async searchOrders(req: Request, res: Response) {
+    try {
+      const { status, paymentStatus, startDate, endDate, search } = req.query;
+      const userId = (req as any).user.id;
+      const userRole = (req as any).user.role;
+
+      let orders;
+      if (userRole === "importer") {
+        orders = await orderRepo.getOrdersByBuyerId(userId);
+      } else if (userRole === "exporter") {
+        orders = await orderRepo.getOrdersBySellerId(userId);
+      } else {
+        orders = await orderRepo.getAllOrders();
+      }
+
+      // Filter orders based on query parameters
+      let filteredOrders = orders;
+
+      if (status) {
+        filteredOrders = filteredOrders.filter(
+          (order: any) => order.getDataValue("status") === status,
+        );
+      }
+
+      if (paymentStatus) {
+        filteredOrders = filteredOrders.filter(
+          (order: any) => order.getDataValue("paymentStatus") === paymentStatus,
+        );
+      }
+
+      if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+        filteredOrders = filteredOrders.filter((order: any) => {
+          const orderDate = new Date(order.getDataValue("createdAt"));
+          return orderDate >= start && orderDate <= end;
+        });
+      }
+
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredOrders = filteredOrders.filter((order: any) => {
+          const product = order.getDataValue("product");
+          const orderNumber = order.getDataValue("orderNumber");
+          return (
+            (product &&
+              product.name &&
+              product.name.toLowerCase().includes(searchTerm)) ||
+            orderNumber.toLowerCase().includes(searchTerm)
+          );
+        });
+      }
+
+      res.json({
+        success: true,
+        data: filteredOrders,
+      });
+    } catch (error) {
+      console.error("Error searching orders:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error searching orders",
+      });
+    }
+  },
+
+  async getOrderStats(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.id;
+      const userRole = (req as any).user.role;
+
+      let orders;
+      if (userRole === "importer") {
+        orders = await orderRepo.getOrdersByBuyerId(userId);
+      } else if (userRole === "exporter") {
+        orders = await orderRepo.getOrdersBySellerId(userId);
+      } else {
+        orders = await orderRepo.getAllOrders();
+      }
+
+      // Calculate statistics
+      const totalOrders = orders.length;
+      const totalAmount = orders.reduce(
+        (sum: number, order: any) =>
+          sum + parseFloat(order.getDataValue("totalAmount")),
+        0,
+      );
+
+      const statusCounts = orders.reduce((counts: any, order: any) => {
+        const status = order.getDataValue("status");
+        counts[status] = (counts[status] || 0) + 1;
+        return counts;
+      }, {});
+
+      const paymentStatusCounts = orders.reduce((counts: any, order: any) => {
+        const paymentStatus = order.getDataValue("paymentStatus");
+        counts[paymentStatus] = (counts[paymentStatus] || 0) + 1;
+        return counts;
+      }, {});
+
+      res.json({
+        success: true,
+        data: {
+          totalOrders,
+          totalAmount,
+          statusCounts,
+          paymentStatusCounts,
+        },
+      });
+    } catch (error) {
+      console.error("Error getting order stats:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error getting order statistics",
       });
     }
   },

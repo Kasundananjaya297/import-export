@@ -47,4 +47,23 @@ router.delete(
   orderController.deleteOrder as RequestHandler,
 );
 
+// New order management routes
+router.post(
+  "/:id/cancel",
+  verifyToken as RequestHandler,
+  orderController.cancelOrder as RequestHandler,
+);
+
+router.get(
+  "/search",
+  verifyToken as RequestHandler,
+  orderController.searchOrders as RequestHandler,
+);
+
+router.get(
+  "/stats",
+  verifyToken as RequestHandler,
+  orderController.getOrderStats as RequestHandler,
+);
+
 export default router;

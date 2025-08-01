@@ -3,22 +3,31 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
-  CardMedia,
   CardContent,
-  CardActions,
+  CardMedia,
   Typography,
+  Button,
   Box,
   Chip,
-  Avatar,
   IconButton,
-  Button,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Grid,
 } from "@mui/material";
 import {
+  MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Inventory as InventoryIcon,
+  Visibility as VisibilityIcon,
   NavigateBefore as NavigateBeforeIcon,
   NavigateNext as NavigateNextIcon,
+  Inventory as InventoryIcon,
+  Warning as WarningIcon,
+  Cancel as CancelIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
 import { Product } from "../../services/productService";
 
@@ -35,110 +44,127 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
   onDelete,
   onViewDetails,
 }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
-  const hasMultipleImages = product.images && product.images.length > 1;
-
-  // Auto-carousel functionality
+  // Auto-play carousel
   useEffect(() => {
-    if (hasMultipleImages && !isPaused) {
-      intervalRef.current = setInterval(() => {
+    if (isAutoPlaying && product.images && product.images.length > 1) {
+      autoPlayRef.current = setInterval(() => {
         setCurrentImageIndex((prev) =>
           prev === product.images.length - 1 ? 0 : prev + 1,
         );
-      }, 3000); // Change image every 3 seconds
+      }, 3000);
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
       }
     };
-  }, [hasMultipleImages, isPaused, product.images.length]);
+  }, [isAutoPlaying, product.images]);
 
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
-  const handleEdit = () => {
-    if (onEdit) {
-      onEdit(product);
-    } else {
-      console.log("Edit product:", product.id);
-    }
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleDelete = () => {
-    if (onDelete) {
-      onDelete(product);
-    } else {
-      console.log("Delete product:", product.id);
-    }
-  };
-
-  const handleViewDetails = () => {
-    if (onViewDetails) {
-      onViewDetails(product);
-    } else {
-      console.log("View details:", product.id);
-    }
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
   const handleNext = () => {
-    if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prev) =>
-        prev === product.images.length - 1 ? 0 : prev + 1,
-      );
-    }
+    setCurrentImageIndex((prev) =>
+      prev === product.images.length - 1 ? 0 : prev + 1,
+    );
   };
 
   const handlePrevious = () => {
-    if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prev) =>
-        prev === 0 ? product.images.length - 1 : prev - 1,
-      );
-    }
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1,
+    );
   };
 
   const handleMouseEnter = () => {
-    setIsPaused(true);
+    setIsAutoPlaying(false);
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+    }
   };
 
   const handleMouseLeave = () => {
-    setIsPaused(false);
+    setIsAutoPlaying(true);
   };
 
   const getCurrentImage = () => {
-    if (product.images && product.images.length > 0) {
-      return product.images[currentImageIndex];
+    if (!product.images || product.images.length === 0) {
+      return "https://via.placeholder.com/300x200?text=No+Image";
     }
-    return "https://via.placeholder.com/300x200?text=No+Image";
+    return product.images[currentImageIndex];
   };
+
+  const getStockStatus = () => {
+    if (product.quantity === 0) {
+      return {
+        status: "out_of_stock",
+        color: "error",
+        text: "Out of Stock",
+        icon: <CancelIcon />,
+      };
+    } else if (product.quantity <= product.minOrderQuantity) {
+      return {
+        status: "low_stock",
+        color: "warning",
+        text: "Low Stock",
+        icon: <WarningIcon />,
+      };
+    } else if (product.quantity <= product.minOrderQuantity * 3) {
+      return {
+        status: "moderate_stock",
+        color: "info",
+        text: "Moderate Stock",
+        icon: <InventoryIcon />,
+      };
+    } else {
+      return {
+        status: "in_stock",
+        color: "success",
+        text: "In Stock",
+        icon: <TrendingUpIcon />,
+      };
+    }
+  };
+
+  const getStockPercentage = () => {
+    // Calculate stock percentage based on a reasonable maximum (e.g., 10x min order)
+    const maxStock = product.minOrderQuantity * 10;
+    return Math.min((product.quantity / maxStock) * 100, 100);
+  };
+
+  const stockStatus = getStockStatus();
+  const stockPercentage = getStockPercentage();
 
   return (
     <Card
       sx={{
-        maxWidth: 345,
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        transition: "transform 0.2s",
+        transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow: 4,
+          boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
         },
       }}
     >
-      {/* Carousel Section */}
+      {/* Image Carousel */}
       <Box
-        sx={{ position: "relative" }}
+        sx={{
+          position: "relative",
+          height: 200,
+          overflow: "hidden",
+        }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -146,12 +172,19 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
           component="img"
           height="200"
           image={getCurrentImage()}
-          alt={`${product.name} - Image ${currentImageIndex + 1}`}
-          sx={{ objectFit: "cover" }}
+          alt={product.name}
+          sx={{
+            objectFit: "cover",
+            width: "100%",
+            transition: "transform 0.3s ease-in-out",
+            "&:hover": {
+              transform: "scale(1.05)",
+            },
+          }}
         />
 
         {/* Navigation Arrows */}
-        {hasMultipleImages && (
+        {product.images && product.images.length > 1 && (
           <>
             <IconButton
               onClick={handlePrevious}
@@ -160,11 +193,8 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
                 left: 8,
                 top: "50%",
                 transform: "translateY(-50%)",
-                bgcolor: "rgba(255, 255, 255, 0.8)",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.9)",
-                },
-                zIndex: 1,
+                bgcolor: "rgba(255,255,255,0.8)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
               }}
               size="small"
             >
@@ -177,11 +207,8 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
                 right: 8,
                 top: "50%",
                 transform: "translateY(-50%)",
-                bgcolor: "rgba(255, 255, 255, 0.8)",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.9)",
-                },
-                zIndex: 1,
+                bgcolor: "rgba(255,255,255,0.8)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
               }}
               size="small"
             >
@@ -190,8 +217,46 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
           </>
         )}
 
+        {/* Image Counter */}
+        {product.images && product.images.length > 1 && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              bgcolor: "rgba(0,0,0,0.7)",
+              color: "white",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: "0.75rem",
+            }}
+          >
+            {currentImageIndex + 1} / {product.images.length}
+          </Box>
+        )}
+
+        {/* Auto-play Badge */}
+        {isAutoPlaying && product.images && product.images.length > 1 && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              bgcolor: "rgba(0,0,0,0.7)",
+              color: "white",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: "0.75rem",
+            }}
+          >
+            Auto
+          </Box>
+        )}
+
         {/* Dots Indicator */}
-        {hasMultipleImages && (
+        {product.images && product.images.length > 1 && (
           <Box
             sx={{
               position: "absolute",
@@ -200,13 +265,11 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
               transform: "translateX(-50%)",
               display: "flex",
               gap: 0.5,
-              zIndex: 1,
             }}
           >
             {product.images.map((_, index) => (
               <Box
                 key={index}
-                onClick={() => setCurrentImageIndex(index)}
                 sx={{
                   width: 8,
                   height: 8,
@@ -214,126 +277,230 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
                   bgcolor:
                     index === currentImageIndex
                       ? "white"
-                      : "rgba(255, 255, 255, 0.5)",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                  "&:hover": {
-                    bgcolor:
-                      index === currentImageIndex
-                        ? "white"
-                        : "rgba(255, 255, 255, 0.8)",
-                  },
+                      : "rgba(255,255,255,0.5)",
                 }}
               />
             ))}
           </Box>
         )}
 
-        {/* Image Counter */}
-        {hasMultipleImages && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              bgcolor: "rgba(0, 0, 0, 0.6)",
-              color: "white",
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              fontSize: "0.75rem",
-              zIndex: 1,
-            }}
-          >
-            {currentImageIndex + 1} / {product.images.length}
-          </Box>
-        )}
-
-        {/* Auto-play Indicator */}
-        {hasMultipleImages && !isPaused && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: 8,
-              left: 8,
-              bgcolor: "rgba(0, 0, 0, 0.6)",
-              color: "white",
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              fontSize: "0.75rem",
-              zIndex: 1,
-            }}
-          >
-            Auto
-          </Box>
-        )}
-      </Box>
-
-      <CardContent sx={{ flexGrow: 1 }}>
+        {/* Stock Status Badge */}
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 1,
+            position: "absolute",
+            top: 8,
+            left: product.images && product.images.length > 1 ? 60 : 8,
+            zIndex: 1,
           }}
         >
-          <Typography variant="h6" component="h2" gutterBottom>
-            {product.name}
-          </Typography>
-          <Chip label="Active" color="success" size="small" />
+          <Chip
+            icon={stockStatus.icon}
+            label={stockStatus.text}
+            color={stockStatus.color as any}
+            size="small"
+            variant="filled"
+          />
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-          <Avatar
+        {/* Action Menu */}
+        <Box sx={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}>
+          <IconButton
+            onClick={handleMenuOpen}
             sx={{
-              width: 24,
-              height: 24,
-              mr: 1,
-              bgcolor: "primary.main",
+              bgcolor: "rgba(255,255,255,0.9)",
+              "&:hover": { bgcolor: "rgba(255,255,255,1)" },
             }}
+            size="small"
           >
-            <InventoryIcon fontSize="small" />
-          </Avatar>
-          <Typography variant="body2" color="text.secondary">
-            {product.category}
-          </Typography>
+            <MoreVertIcon />
+          </IconButton>
         </Box>
+      </Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <CardContent
+        sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
+      >
+        <Typography
+          variant="h6"
+          component="h2"
+          gutterBottom
+          sx={{ fontWeight: 600 }}
+        >
+          {product.name}
+        </Typography>
+
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 2, flexGrow: 1 }}
+        >
           {product.description}
         </Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="h6" color="primary">
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h5" color="primary" sx={{ fontWeight: "bold" }}>
             ${parseFloat(product.price).toFixed(2)}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {product.quantity} {product.unit}
+            per {product.unit}
           </Typography>
+        </Box>
+
+        {/* Stock Information */}
+        <Box sx={{ mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1,
+            }}
+          >
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              <InventoryIcon sx={{ mr: 1, fontSize: "1rem" }} />
+              Stock: {product.quantity} {product.unit}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {stockPercentage.toFixed(0)}% full
+            </Typography>
+          </Box>
+
+          {/* Stock Progress Bar */}
+          <Box
+            sx={{
+              width: "100%",
+              bgcolor: "grey.200",
+              borderRadius: 1,
+              height: 6,
+              mb: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: `${stockPercentage}%`,
+                height: "100%",
+                bgcolor:
+                  stockStatus.color === "error"
+                    ? "error.main"
+                    : stockStatus.color === "warning"
+                    ? "warning.main"
+                    : stockStatus.color === "info"
+                    ? "info.main"
+                    : "success.main",
+                borderRadius: 1,
+                transition: "width 0.3s ease",
+              }}
+            />
+          </Box>
+
+          <Typography variant="body2" color="text.secondary">
+            Min Order: {product.minOrderQuantity} {product.unit}
+          </Typography>
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <Chip label={product.category} size="small" sx={{ mr: 1 }} />
+          <Chip
+            label={`Origin: ${product.origin}`}
+            size="small"
+            variant="outlined"
+          />
+        </Box>
+
+        {/* Action Buttons */}
+        <Box sx={{ mt: "auto" }}>
+          <Grid container spacing={1}>
+            <Grid item xs={4}>
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                onClick={() => onViewDetails?.(product)}
+                startIcon={<VisibilityIcon />}
+              >
+                View
+              </Button>
+            </Grid>
+            <Grid item xs={4}>
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                onClick={() => onEdit?.(product)}
+                startIcon={<EditIcon />}
+                color="primary"
+              >
+                Edit
+              </Button>
+            </Grid>
+            <Grid item xs={4}>
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                onClick={() => onDelete?.(product)}
+                startIcon={<DeleteIcon />}
+                color="error"
+              >
+                Delete
+              </Button>
+            </Grid>
+          </Grid>
         </Box>
       </CardContent>
 
-      <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
-        <Box>
-          <IconButton color="primary" size="small" onClick={handleEdit}>
-            <EditIcon />
-          </IconButton>
-          <IconButton color="error" size="small" onClick={handleDelete}>
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-        <Button size="small" variant="outlined" onClick={handleViewDetails}>
-          View Details
-        </Button>
-      </CardActions>
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            onViewDetails?.(product);
+            handleMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            <VisibilityIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>View Details</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onEdit?.(product);
+            handleMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit Product</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onDelete?.(product);
+            handleMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete Product</ListItemText>
+        </MenuItem>
+      </Menu>
     </Card>
   );
 };

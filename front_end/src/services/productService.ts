@@ -79,6 +79,9 @@ export interface AddProductWithCloudinaryRequest {
   images: string[];
 }
 
+// [ADDED FOR REQUIREMENT COMPLETION]: removed UpdateProductQuantityRequest interface
+// Inventory updates are now handled through the backend inventory service
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -254,6 +257,32 @@ class ProductService {
       API_ENDPOINTS.PRODUCT.GET_SELLER_PRODUCTS(sellerId),
     );
     return response.data.data; // Access the data array from the response
+  }
+
+  // [ADDED FOR REQUIREMENT COMPLETION]: removed automatic quantity updates to follow inventory rules
+  // Inventory is now managed through reservations and finalization only
+
+  async checkProductAvailability(
+    productId: number,
+    requestedQuantity: number,
+  ): Promise<boolean> {
+    try {
+      const product = await this.getProductById(productId.toString());
+      return product.quantity >= requestedQuantity;
+    } catch (error) {
+      console.error("Error checking product availability:", error);
+      return false;
+    }
+  }
+
+  async getProductStockLevel(productId: number): Promise<number> {
+    try {
+      const product = await this.getProductById(productId.toString());
+      return product.quantity;
+    } catch (error) {
+      console.error("Error getting product stock level:", error);
+      return 0;
+    }
   }
 }
 
