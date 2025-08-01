@@ -5,6 +5,7 @@ import { IUser } from "../interfaces";
 
 export const createUser = async (user: IUser) => {
   try {
+    console.log("test User", user);
     const newUser = await User.create({ ...user });
     return newUser;
   } catch (error) {

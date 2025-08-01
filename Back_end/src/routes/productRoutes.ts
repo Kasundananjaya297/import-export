@@ -14,6 +14,12 @@ router.post(
 );
 router.get("/all", productController.getAllProducts as RequestHandler);
 router.get("/:id", productController.getProductById as RequestHandler);
+router.get(
+  "",
+  verifyToken as RequestHandler,
+  productController.getProductByUserId as RequestHandler,
+);
+
 router.put(
   "/:id",
   verifyToken as RequestHandler,

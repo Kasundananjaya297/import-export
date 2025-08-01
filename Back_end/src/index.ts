@@ -6,6 +6,8 @@ import sequelize from "./config/db";
 import userRoutes from "./routes/userRouts";
 import productRoutes from "./routes/productRoutes";
 import cors from "cors";
+// Import models with associations
+import "./models/index";
 
 dotenv.config();
 
@@ -65,7 +67,7 @@ app.use("/shared/uploads", express.static("shared/uploads"));
 
 // Database connection and server start
 sequelize
-  .sync({ force: false })
+  .sync({ force: false }) // Changed back to false after creating tables with foreign keys
   .then(() => {
     console.log("MySQL connected!");
     app.listen(PORT, () => {

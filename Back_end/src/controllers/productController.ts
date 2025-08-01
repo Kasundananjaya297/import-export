@@ -146,6 +146,36 @@ export const productController = {
     }
   },
 
+  async getProductByUserId(req: Request, res: Response) {
+    try {
+      // Get userId from query parameters (?userId=13)
+      const userId = req.query.userId || (req as any).user?.id;
+
+      console.log("Received userId from query:", req.query.userId);
+      console.log("Final userId being used:", userId);
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "User ID is required as query parameter (?userId=13)",
+        });
+      }
+
+      const products = await productRepo.getProductByUserId(Number(userId));
+      res.json({
+        success: true,
+        data: products,
+        count: products.length,
+      });
+    } catch (error) {
+      console.error("Error fetching products by user ID:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error fetching products by user ID",
+      });
+    }
+  },
+
   async deleteProduct(req: Request, res: Response) {
     try {
       const { id } = req.params;

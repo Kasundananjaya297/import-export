@@ -4,11 +4,11 @@ import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "../config";
 
 export interface Product {
-  id: string;
+  id: number;
   name: string;
   category: string;
   description: string;
-  price: number;
+  price: string; // API returns price as string
   quantity: number;
   unit: string;
   minOrderQuantity: number;
@@ -16,7 +16,8 @@ export interface Product {
   specifications: string;
   origin: string;
   certification: string;
-  sellerId: string;
+  userId: number; // API uses userId instead of sellerId
+  status:string,
   createdAt: string;
   updatedAt: string;
 }
@@ -83,9 +84,6 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${
-      JSON.parse(localStorage.getItem("currentUser") || "{}").jwt
-    }`,
   },
 });
 
@@ -156,7 +154,7 @@ class ProductService {
       },
     });
 
-    return response.data;
+    return response.data.data; // Access the data object from the response
   }
 
   async addProductWithCloudinary(
@@ -182,17 +180,17 @@ class ProductService {
       },
     });
 
-    return response.data;
+    return response.data.data; // Access the data object from the response
   }
 
   async getProducts(): Promise<Product[]> {
     const response = await api.get(API_ENDPOINTS.PRODUCT.GET_ALL);
-    return response.data;
+    return response.data.data; // Access the data array from the response
   }
 
   async getProductById(id: string): Promise<Product> {
     const response = await api.get(API_ENDPOINTS.PRODUCT.GET_BY_ID(id));
-    return response.data;
+    return response.data.data; // Access the data object from the response
   }
 
   async updateProduct(
@@ -223,7 +221,7 @@ class ProductService {
       },
     });
 
-    return response.data;
+    return response.data.data; // Access the data object from the response
   }
 
   async deleteProduct(id: string): Promise<void> {
@@ -234,7 +232,7 @@ class ProductService {
     const response = await api.get(
       API_ENDPOINTS.PRODUCT.GET_SELLER_PRODUCTS(sellerId),
     );
-    return response.data;
+    return response.data.data; // Access the data array from the response
   }
 }
 

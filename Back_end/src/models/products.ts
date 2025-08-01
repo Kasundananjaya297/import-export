@@ -62,6 +62,8 @@ Product.init(
         model: "User",
         key: "id",
       },
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
     },
   },
   {
