@@ -29,7 +29,21 @@ export interface AddProductData {
   quantity: string;
   unit: string;
   minOrderQuantity: string;
-  images: File[];
+  images: File[] | string[]; // Support both files and URLs
+  specifications: string;
+  origin: string;
+  certification: string;
+}
+
+export interface AddProductWithCloudinaryData {
+  name: string;
+  category: string;
+  description: string;
+  price: string;
+  quantity: string;
+  unit: string;
+  minOrderQuantity: string;
+  images: string[]; // Image URLs from Cloudinary
   specifications: string;
   origin: string;
   certification: string;
@@ -50,20 +64,40 @@ export interface AddProductRequest {
   images: File[];
 }
 
+export interface AddProductWithCloudinaryRequest {
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  minOrderQuantity: number;
+  specifications: string;
+  origin: string;
+  certification: string;
+  images: string[];
+}
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
+    Authorization: `Bearer ${
+      JSON.parse(localStorage.getItem("currentUser") || "{}").jwt
+    }`,
   },
 });
 
 // Add request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const currentUser = localStorage.getItem("currentUser");
+    if (currentUser) {
+      const userData = JSON.parse(currentUser);
+      if (userData.jwt) {
+        config.headers.Authorization = `Bearer ${userData.jwt}`;
+      }
     }
     return config;
   },
@@ -74,6 +108,17 @@ api.interceptors.request.use(
 
 class ProductService {
   async addProduct(productData: AddProductData): Promise<Product> {
+    // Check if images are URLs (Cloudinary) or Files
+    if (
+      Array.isArray(productData.images) &&
+      productData.images.length > 0 &&
+      typeof productData.images[0] === "string"
+    ) {
+      return this.addProductWithCloudinary(
+        productData as AddProductWithCloudinaryData,
+      );
+    }
+
     const formData = new FormData();
 
     // Convert string values to numbers where needed
@@ -88,8 +133,10 @@ class ProductService {
       specifications: productData.specifications,
       origin: productData.origin,
       certification: productData.certification,
-      images: productData.images,
+      images: productData.images as File[],
     };
+
+    console.log("====", requestData);
 
     // Append all text fields
     Object.entries(requestData).forEach(([key, value]) => {
@@ -106,6 +153,32 @@ class ProductService {
     const response = await api.post(API_ENDPOINTS.PRODUCT.CREATE, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data;
+  }
+
+  async addProductWithCloudinary(
+    productData: AddProductWithCloudinaryData,
+  ): Promise<Product> {
+    const requestData: AddProductWithCloudinaryRequest = {
+      name: productData.name,
+      category: productData.category,
+      description: productData.description,
+      price: parseFloat(productData.price),
+      quantity: parseInt(productData.quantity),
+      unit: productData.unit,
+      minOrderQuantity: parseInt(productData.minOrderQuantity),
+      specifications: productData.specifications,
+      origin: productData.origin,
+      certification: productData.certification,
+      images: productData.images,
+    };
+
+    const response = await api.post(API_ENDPOINTS.PRODUCT.CREATE, requestData, {
+      headers: {
+        "Content-Type": "application/json",
       },
     });
 

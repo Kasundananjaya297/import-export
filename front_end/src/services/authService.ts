@@ -31,9 +31,12 @@ const api = axios.create({
 // Add request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const currentUser = localStorage.getItem("currentUser");
+    if (currentUser) {
+      const userData = JSON.parse(currentUser);
+      if (userData.token) {
+        config.headers.Authorization = `Bearer ${userData.token}`;
+      }
     }
     return config;
   },
@@ -46,9 +49,6 @@ export const authService = {
   async register(data: RegisterData) {
     try {
       const response = await api.post(API_ENDPOINTS.USER.CREATE, data);
-      if (response.data.jwt) {
-        localStorage.setItem("token", response.data.jwt);
-      }
       return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Registration failed");
@@ -61,9 +61,6 @@ export const authService = {
         email,
         password,
       });
-      if (response.data.jwt) {
-        localStorage.setItem("token", response.data.jwt);
-      }
       return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Login failed");
@@ -71,13 +68,13 @@ export const authService = {
   },
 
   logout() {
-    localStorage.removeItem("token");
+    // Token removal is handled in AuthContext
   },
 
   async getCurrentUser() {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
         return null;
       }
       const response = await api.get(API_ENDPOINTS.USER.GET_CURRENT);

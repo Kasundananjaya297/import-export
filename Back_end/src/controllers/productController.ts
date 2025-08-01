@@ -6,6 +6,9 @@ import * as productRepo from "../repos/productRepo";
 export const productController = {
   async create(req: Request, res: Response) {
     try {
+      console.log("Request body:", req.body);
+      console.log("Request files:", req.files);
+
       const {
         name,
         category,
@@ -21,19 +24,41 @@ export const productController = {
         userId,
       } = req.body;
 
+      // Validate required fields
+      if (!name || !category || !description || !price || !quantity || !unit) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Missing required fields: name, category, description, price, quantity, unit",
+        });
+      }
+
+      // Handle uploaded images
+      let imageUrls: string[] = images;
+      if (req.files && Array.isArray(req.files)) {
+        const baseUrl = `${req.protocol}://${req.get("host")}`;
+        imageUrls = req.files.map(
+          (file: Express.Multer.File) =>
+            `${baseUrl}/shared/uploads/${file.filename}`,
+        );
+      }
+
+      // Get userId from authenticated user if available
+      const authenticatedUserId = (req as any).user?.id || parseInt(userId);
+
       const product = await productRepo.createProduct({
         name,
         category,
         description,
-        price,
-        quantity,
+        price: parseFloat(price),
+        quantity: parseInt(quantity),
         unit,
-        minOrderQuantity,
-        specifications,
-        origin,
-        certification,
-        images,
-        userId,
+        minOrderQuantity: minOrderQuantity ? parseInt(minOrderQuantity) : 1,
+        specifications: specifications || "",
+        origin: origin || "",
+        certification: certification || "",
+        images: imageUrls,
+        userId: authenticatedUserId,
       });
 
       res.status(201).json({

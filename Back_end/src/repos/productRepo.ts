@@ -4,13 +4,14 @@ import Product from "../models/products";
 import { IProduct } from "../interfaces";
 
 export const createProduct = async (product: Omit<IProduct, "id">) => {
-  console.log(product);
+  console.log("test---", product);
   const newProduct = await Product.create(product);
   return newProduct;
 };
 
 export const getAllProducts = async () => {
   const products = await Product.findAll();
+  console.log(products);
   return products;
 };
 

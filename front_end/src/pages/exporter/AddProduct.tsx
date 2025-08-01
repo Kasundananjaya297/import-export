@@ -15,12 +15,12 @@ import {
   Select,
   SelectChangeEvent,
   InputAdornment,
-  IconButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { PhotoCamera } from "@mui/icons-material";
 import { productService, AddProductData } from "../../services/productService";
+import CloudinaryImageUpload from "../../components/common/CloudinaryImageUpload";
+import ImageGallery from "../../components/common/ImageGallery";
 
 const categories = [
   "Tea",
@@ -53,6 +53,8 @@ const AddProduct: React.FC = () => {
     certification: "",
   });
 
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (
@@ -73,10 +75,11 @@ const AddProduct: React.FC = () => {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setFormData((prev) => ({ ...prev, images: [...prev.images, ...files] }));
+  const handleImagesChange = (urls: string[]) => {
+    setImageUrls(urls);
+    // Clear image error if images are uploaded
+    if (urls.length > 0 && errors.images) {
+      setErrors((prev) => ({ ...prev, images: "" }));
     }
   };
 
@@ -93,7 +96,7 @@ const AddProduct: React.FC = () => {
     if (!formData.minOrderQuantity)
       newErrors.minOrderQuantity = "Minimum order quantity is required";
     if (!formData.origin) newErrors.origin = "Origin is required";
-    if (formData.images.length === 0) {
+    if (imageUrls.length === 0) {
       newErrors.images = "At least one product image is required";
     }
 
@@ -109,7 +112,13 @@ const AddProduct: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await productService.addProduct(formData);
+      // Create product data with image URLs instead of files
+      const productData = {
+        ...formData,
+        images: imageUrls, // Use the uploaded image URLs
+      };
+
+      await productService.addProduct(productData);
       enqueueSnackbar("Product added successfully!", { variant: "success" });
       navigate("/exporter/dashboard");
     } catch (error) {
@@ -283,32 +292,29 @@ const AddProduct: React.FC = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Button
-                variant="contained"
-                component="label"
-                startIcon={<PhotoCamera />}
-                sx={{ mb: 2 }}
-              >
-                Upload Product Images
-                <input
-                  type="file"
-                  hidden
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
-              </Button>
-              {formData.images.length > 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  {formData.images.length} image(s) selected
-                </Typography>
-              )}
-              {errors.images && (
-                <Typography variant="caption" color="error">
-                  {errors.images}
-                </Typography>
-              )}
+              <Typography variant="h6" gutterBottom>
+                Product Images
+              </Typography>
+              <CloudinaryImageUpload
+                onImagesChange={handleImagesChange}
+                maxImages={5}
+                error={errors.images}
+              />
             </Grid>
+
+            {imageUrls.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Image Preview
+                </Typography>
+                <ImageGallery
+                  images={imageUrls}
+                  maxHeight={150}
+                  showImageCount={false}
+                  allowZoom={true}
+                />
+              </Grid>
+            )}
 
             <Grid item xs={12}>
               <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>

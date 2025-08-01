@@ -18,7 +18,11 @@ app.use(express.json());
 // CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:5173"], // Add your frontend URL
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:5174",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -56,9 +60,12 @@ app.use("/api/user", userRoutes);
 // Product routes
 app.use("/api/products", productRoutes);
 
+// Serve static files for uploaded images
+app.use("/shared/uploads", express.static("shared/uploads"));
+
 // Database connection and server start
 sequelize
-  .sync({ alter: true })
+  .sync({ force: false })
   .then(() => {
     console.log("MySQL connected!");
     app.listen(PORT, () => {
