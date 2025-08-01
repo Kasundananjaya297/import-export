@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardMedia,
@@ -17,6 +17,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Inventory as InventoryIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon,
 } from "@mui/icons-material";
 import { Product } from "../../services/productService";
 
@@ -33,6 +35,38 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
   onDelete,
   onViewDetails,
 }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const hasMultipleImages = product.images && product.images.length > 1;
+
+  // Auto-carousel functionality
+  useEffect(() => {
+    if (hasMultipleImages && !isPaused) {
+      intervalRef.current = setInterval(() => {
+        setCurrentImageIndex((prev) =>
+          prev === product.images.length - 1 ? 0 : prev + 1,
+        );
+      }, 3000); // Change image every 3 seconds
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [hasMultipleImages, isPaused, product.images.length]);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
   const handleEdit = () => {
     if (onEdit) {
       onEdit(product);
@@ -57,6 +91,37 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
     }
   };
 
+  const handleNext = () => {
+    if (product.images && product.images.length > 0) {
+      setCurrentImageIndex((prev) =>
+        prev === product.images.length - 1 ? 0 : prev + 1,
+      );
+    }
+  };
+
+  const handlePrevious = () => {
+    if (product.images && product.images.length > 0) {
+      setCurrentImageIndex((prev) =>
+        prev === 0 ? product.images.length - 1 : prev - 1,
+      );
+    }
+  };
+
+  const handleMouseEnter = () => {
+    setIsPaused(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+  };
+
+  const getCurrentImage = () => {
+    if (product.images && product.images.length > 0) {
+      return product.images[currentImageIndex];
+    }
+    return "https://via.placeholder.com/300x200?text=No+Image";
+  };
+
   return (
     <Card
       sx={{
@@ -71,17 +136,139 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
         },
       }}
     >
-      <CardMedia
-        component="img"
-        height="200"
-        image={
-          product.images && product.images.length > 0
-            ? product.images[0]
-            : "https://via.placeholder.com/300x200?text=No+Image"
-        }
-        alt={product.name}
-        sx={{ objectFit: "cover" }}
-      />
+      {/* Carousel Section */}
+      <Box
+        sx={{ position: "relative" }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <CardMedia
+          component="img"
+          height="200"
+          image={getCurrentImage()}
+          alt={`${product.name} - Image ${currentImageIndex + 1}`}
+          sx={{ objectFit: "cover" }}
+        />
+
+        {/* Navigation Arrows */}
+        {hasMultipleImages && (
+          <>
+            <IconButton
+              onClick={handlePrevious}
+              sx={{
+                position: "absolute",
+                left: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                bgcolor: "rgba(255, 255, 255, 0.8)",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.9)",
+                },
+                zIndex: 1,
+              }}
+              size="small"
+            >
+              <NavigateBeforeIcon />
+            </IconButton>
+            <IconButton
+              onClick={handleNext}
+              sx={{
+                position: "absolute",
+                right: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                bgcolor: "rgba(255, 255, 255, 0.8)",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.9)",
+                },
+                zIndex: 1,
+              }}
+              size="small"
+            >
+              <NavigateNextIcon />
+            </IconButton>
+          </>
+        )}
+
+        {/* Dots Indicator */}
+        {hasMultipleImages && (
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 8,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              gap: 0.5,
+              zIndex: 1,
+            }}
+          >
+            {product.images.map((_, index) => (
+              <Box
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  bgcolor:
+                    index === currentImageIndex
+                      ? "white"
+                      : "rgba(255, 255, 255, 0.5)",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                  "&:hover": {
+                    bgcolor:
+                      index === currentImageIndex
+                        ? "white"
+                        : "rgba(255, 255, 255, 0.8)",
+                  },
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* Image Counter */}
+        {hasMultipleImages && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              bgcolor: "rgba(0, 0, 0, 0.6)",
+              color: "white",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: "0.75rem",
+              zIndex: 1,
+            }}
+          >
+            {currentImageIndex + 1} / {product.images.length}
+          </Box>
+        )}
+
+        {/* Auto-play Indicator */}
+        {hasMultipleImages && !isPaused && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              bgcolor: "rgba(0, 0, 0, 0.6)",
+              color: "white",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: "0.75rem",
+              zIndex: 1,
+            }}
+          >
+            Auto
+          </Box>
+        )}
+      </Box>
 
       <CardContent sx={{ flexGrow: 1 }}>
         <Box
@@ -132,16 +319,6 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
             {product.quantity} {product.unit}
           </Typography>
         </Box>
-
-        {product.images && product.images.length > 1 && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ mt: 1, display: "block" }}
-          >
-            +{product.images.length - 1} more image(s)
-          </Typography>
-        )}
       </CardContent>
 
       <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>

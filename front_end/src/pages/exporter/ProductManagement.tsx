@@ -13,12 +13,10 @@ import {
   MenuItem,
   SelectChangeEvent,
   CircularProgress,
-  Alert,
 } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { productService, Product } from "../../services/productService";
-import { useSnackbar } from "notistack";
 import ProductManagementCard from "../../components/products/ProductManagementCard";
 
 const ProductManagement: React.FC = () => {
@@ -28,16 +26,17 @@ const ProductManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const data = await productService.getProducts();
+        const data = await productService.getProductByUserId();
         setProducts(data);
       } catch (err) {
         console.error("Error fetching products:", err);
-        // You can add error handling here if needed
+        setError("Failed to load products. Please try again.");
       } finally {
         setLoading(false);
       }

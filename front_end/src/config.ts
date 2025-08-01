@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
   PRODUCT: {
     CREATE: "/products/create",
     GET_ALL: "/products/all",
+    GET_BY_USER_ID:"/products",
     GET_BY_ID: (id: string) => `/products/${id}`,
     UPDATE: (id: string) => `/products/${id}`,
     DELETE: (id: string) => `/products/${id}`,

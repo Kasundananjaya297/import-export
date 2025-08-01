@@ -17,7 +17,7 @@ export interface Product {
   origin: string;
   certification: string;
   userId: number; // API uses userId instead of sellerId
-  status:string,
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,8 +134,6 @@ class ProductService {
       images: productData.images as File[],
     };
 
-    console.log("====", requestData);
-
     // Append all text fields
     Object.entries(requestData).forEach(([key, value]) => {
       if (key !== "images") {
@@ -191,6 +189,29 @@ class ProductService {
   async getProductById(id: string): Promise<Product> {
     const response = await api.get(API_ENDPOINTS.PRODUCT.GET_BY_ID(id));
     return response.data.data; // Access the data object from the response
+  }
+
+  async getProductByUserId(): Promise<Product[]> {
+    // Get user ID from session storage (check both sessionStorage and localStorage)
+    const currentUser =
+      sessionStorage.getItem("currentUser") ||
+      localStorage.getItem("currentUser");
+    if (!currentUser) {
+      throw new Error("User not found in session storage");
+    }
+
+    const userData = JSON.parse(currentUser);
+    const userId = userData.id || userData.userId;
+
+    if (!userId) {
+      throw new Error("User ID not found in session data");
+    }
+
+    // Use the GET_BY_USER_ID endpoint with userId as query parameter
+    const response = await api.get(
+      `${API_ENDPOINTS.PRODUCT.GET_BY_USER_ID}?userId=${userId}`,
+    );
+    return response.data.data; // Access the data array from the response
   }
 
   async updateProduct(
