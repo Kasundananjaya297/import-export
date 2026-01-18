@@ -34,11 +34,6 @@ export const getNavItems = (role: string): NavItem[] => {
           icon: <InventoryIcon />
         },
         {
-          label: 'Place Order',
-          path: '/importer/place-order',
-          icon: <ShoppingCartIcon />
-        },
-        {
           label: 'My Orders',
           path: '/importer/orders',
           icon: <ListAltIcon />

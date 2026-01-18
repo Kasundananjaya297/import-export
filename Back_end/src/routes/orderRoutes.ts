@@ -15,8 +15,7 @@ router.post(
 
 router.get("/all", orderController.getAllOrders as RequestHandler);
 
-router.get("/:id", orderController.getOrderById as RequestHandler);
-
+// Specific routes must come before generic /:id route
 router.get(
   "/buyer/orders",
   verifyToken as RequestHandler,
@@ -28,6 +27,22 @@ router.get(
   verifyToken as RequestHandler,
   orderController.getOrdersBySellerId as RequestHandler,
 );
+
+// Special routes before generic parameter routes
+router.get(
+  "/search",
+  verifyToken as RequestHandler,
+  orderController.searchOrders as RequestHandler,
+);
+
+router.get(
+  "/stats",
+  verifyToken as RequestHandler,
+  orderController.getOrderStats as RequestHandler,
+);
+
+// Generic routes with parameters should come last
+router.get("/:id", orderController.getOrderById as RequestHandler);
 
 router.put(
   "/:id/status",
@@ -47,23 +62,10 @@ router.delete(
   orderController.deleteOrder as RequestHandler,
 );
 
-// New order management routes
 router.post(
   "/:id/cancel",
   verifyToken as RequestHandler,
   orderController.cancelOrder as RequestHandler,
-);
-
-router.get(
-  "/search",
-  verifyToken as RequestHandler,
-  orderController.searchOrders as RequestHandler,
-);
-
-router.get(
-  "/stats",
-  verifyToken as RequestHandler,
-  orderController.getOrderStats as RequestHandler,
 );
 
 export default router;

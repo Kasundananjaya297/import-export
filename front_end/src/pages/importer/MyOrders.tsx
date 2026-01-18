@@ -26,10 +26,10 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { Search, FilterList, Cancel, Refresh } from "@mui/icons-material";
+import { Search, Cancel, Refresh, Payment } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import StatusBadge from "../../components/common/StatusBadge";
 import { orderService, Order } from "../../services/orderService";
+import OrderDetailsModal from "../../components/common/OrderDetailsModal";
 
 const MyOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -40,9 +40,13 @@ const MyOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+
 
   useEffect(() => {
     fetchOrders();
@@ -56,6 +60,7 @@ const MyOrders: React.FC = () => {
     try {
       setLoading(true);
       const ordersData = await orderService.getBuyerOrders();
+
       setOrders(ordersData);
     } catch (err: any) {
       console.error("Error fetching orders:", err);
@@ -124,12 +129,66 @@ const MyOrders: React.FC = () => {
   };
 
   const openCancelDialog = (order: Order) => {
-    if (order.status === "delivered" || order.status === "cancelled") {
+    // Cannot cancel if confirmed, shipped, delivered or cancelled
+    if (order.status === "confirmed" || order.status === "shipped" || order.status === "delivered" || order.status === "cancelled") {
       enqueueSnackbar("This order cannot be cancelled", { variant: "warning" });
       return;
     }
     setSelectedOrder(order);
     setCancelDialogOpen(true);
+  };
+
+  const handleCompletePayment = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      setProcessingPayment(true);
+      // Update payment status to 'paid' in the database
+      await orderService.updatePaymentStatus(selectedOrder.id, "paid");
+
+      // Update the order in the local state
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === selectedOrder.id
+            ? { ...order, paymentStatus: "paid" }
+            : order,
+        ),
+      );
+
+      enqueueSnackbar("Payment completed successfully", {
+        variant: "success",
+      });
+      setPaymentDialogOpen(false);
+      setSelectedOrder(null);
+    } catch (err: any) {
+      console.error("Error completing payment:", err);
+      enqueueSnackbar(err.response?.data?.message || "Failed to complete payment", {
+        variant: "error",
+      });
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const openPaymentDialog = (order: Order) => {
+    // Check if order is confirmed
+    if (order.status !== "confirmed") {
+      enqueueSnackbar("Order must be confirmed before payment", { variant: "warning" });
+      return;
+    }
+    // Check if already paid
+    if (order.paymentStatus === "paid") {
+      enqueueSnackbar("This order is already paid", { variant: "info" });
+      return;
+    }
+    setSelectedOrder(order);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleOrderClick = (order: Order) => {
+    // Open order details modal
+    setSelectedOrder(order);
+    setOrderDetailsOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -286,7 +345,17 @@ const MyOrders: React.FC = () => {
         <Grid container spacing={3}>
           {filteredOrders.map((order) => (
             <Grid item xs={12} key={order.id}>
-              <Card>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: 4,
+                  }
+                }}
+                onClick={() => handleOrderClick(order)}
+              >
                 <CardContent>
                   <Grid container spacing={2}>
                     {/* Product Image */}
@@ -322,7 +391,7 @@ const MyOrders: React.FC = () => {
                         {order.product?.unit || "units"}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Unit Price: ${order.unitPrice.toFixed(2)}
+                        Unit Price: ${Number(order.unitPrice).toFixed(2)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Order Date:{" "}
@@ -354,22 +423,49 @@ const MyOrders: React.FC = () => {
                           sx={{ mb: 2 }}
                         />
                         <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
-                          ${order.totalAmount.toFixed(2)}
+                          ${Number(order.totalAmount).toFixed(2)}
                         </Typography>
 
-                        {/* Cancel Button */}
-                        {order.status !== "delivered" &&
-                          order.status !== "cancelled" && (
-                            <Tooltip title="Cancel Order">
-                              <IconButton
-                                color="error"
-                                size="small"
-                                onClick={() => openCancelDialog(order)}
-                              >
-                                <Cancel />
-                              </IconButton>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                          {/* Payment Button */}
+                          {order.paymentStatus === "pending" && (
+                            <Tooltip title={order.status !== "confirmed" ? "Order must be confirmed first" : "Complete Payment"}>
+                              <span>
+                                <IconButton
+                                  color="success"
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openPaymentDialog(order);
+                                  }}
+                                  disabled={order.status !== "confirmed"}
+                                >
+                                  <Payment />
+                                </IconButton>
+                              </span>
                             </Tooltip>
                           )}
+
+                          {/* Cancel Button */}
+                          {order.status !== "delivered" &&
+                            order.status !== "cancelled" && (
+                              <Tooltip title={order.status === "confirmed" ? "Cannot cancel confirmed order" : "Cancel Order"}>
+                                <span>
+                                  <IconButton
+                                    color="error"
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openCancelDialog(order);
+                                    }}
+                                    disabled={order.status === "confirmed"}
+                                  >
+                                    <Cancel />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            )}
+                        </Box>
                       </Box>
                     </Grid>
                   </Grid>
@@ -394,7 +490,16 @@ const MyOrders: React.FC = () => {
                     <Box sx={{ mt: 1 }}>
                       <Typography variant="body2" color="text.secondary">
                         <strong>Shipping Address:</strong>{" "}
-                        {order.shippingAddress}
+                        {typeof order.shippingAddress === "string"
+                          ? (() => {
+                              try {
+                                const addr = JSON.parse(order.shippingAddress);
+                                return `${addr.line1}${addr.line2 ? ", " + addr.line2 : ""}, ${addr.city}, ${addr.state} ${addr.postalCode}, ${addr.country}`;
+                              } catch {
+                                return order.shippingAddress;
+                              }
+                            })()
+                          : `${order.shippingAddress.line1}${order.shippingAddress.line2 ? ", " + order.shippingAddress.line2 : ""}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}`}
                       </Typography>
                     </Box>
                   )}
@@ -431,6 +536,46 @@ const MyOrders: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Payment Confirmation Dialog */}
+      <Dialog
+        open={paymentDialogOpen}
+        onClose={() => setPaymentDialogOpen(false)}
+      >
+        <DialogTitle>Complete Payment</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Complete payment for order #{selectedOrder?.orderNumber}?
+          </Typography>
+          <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
+            Amount: ${selectedOrder ? Number(selectedOrder.totalAmount).toFixed(2) : "0.00"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            This will mark the payment as completed in the system.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPaymentDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleCompletePayment}
+            color="success"
+            variant="contained"
+            disabled={processingPayment}
+          >
+            {processingPayment ? "Processing..." : "Complete Payment"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        open={orderDetailsOpen}
+        onClose={() => {
+          setOrderDetailsOpen(false);
+          setSelectedOrder(null);
+        }}
+        order={selectedOrder}
+      />
     </Container>
   );
 };

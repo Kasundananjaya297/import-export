@@ -147,7 +147,7 @@ const TransactionHistory: React.FC = () => {
                       </Box>
                     )}
                   </TableCell>
-                  <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell>${Number(order.totalAmount).toFixed(2)}</TableCell>
                   <TableCell>
                     <Chip
                       label={order.status}

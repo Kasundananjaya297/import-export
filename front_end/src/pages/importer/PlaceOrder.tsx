@@ -1167,7 +1167,7 @@ const PlaceOrder: React.FC = () => {
                     Quantity: {orderSummary.quantity} {product.unit}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Unit Price: ${orderSummary.unitPrice.toFixed(2)}
+                    Unit Price: ${Number(orderSummary.unitPrice).toFixed(2)}
                   </Typography>
                 </Box>
 
@@ -1510,15 +1510,6 @@ const PlaceOrder: React.FC = () => {
         <DialogActions sx={{ p: 3 }}>
           <Button variant="outlined" onClick={() => setShowOrderPreview(false)}>
             Continue Shopping
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              setShowOrderPreview(false);
-              navigate(`/importer/payment/${createdOrder.id}`);
-            }}
-          >
-            Proceed to Payment
           </Button>
           <Button
             variant="contained"

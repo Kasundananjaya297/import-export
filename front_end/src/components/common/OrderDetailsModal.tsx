@@ -136,7 +136,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                     Unit Price
                   </Typography>
                   <Typography variant="body1">
-                    ${order.unitPrice.toFixed(2)}
+                    ${Number(order.unitPrice).toFixed(2)}
                   </Typography>
                 </Box>
                 <Box>
@@ -144,7 +144,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                     Total Amount
                   </Typography>
                   <Typography variant="h6" color="primary">
-                    ${order.totalAmount.toFixed(2)}
+                    ${Number(order.totalAmount).toFixed(2)}
                   </Typography>
                 </Box>
               </CardContent>
@@ -305,7 +305,16 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                     Shipping Address
                   </Typography>
                   <Typography variant="body1">
-                    {order.shippingAddress}
+                    {(() => {
+                      try {
+                        const addr = typeof order.shippingAddress === "string"
+                          ? JSON.parse(order.shippingAddress)
+                          : order.shippingAddress;
+                        return `${addr.line1}${addr.line2 ? ", " + addr.line2 : ""}, ${addr.city}, ${addr.state} ${addr.postalCode}, ${addr.country}`;
+                      } catch {
+                        return typeof order.shippingAddress === "string" ? order.shippingAddress : "Address not available";
+                      }
+                    })()}
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 2 }}>

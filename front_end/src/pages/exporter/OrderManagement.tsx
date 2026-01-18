@@ -67,11 +67,19 @@ const OrderManagement: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-    fetchStats();
+    
+    // Auto-refresh every 30 seconds to get latest updates
+    const intervalId = setInterval(() => {
+      fetchOrders();
+    }, 30000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
     filterOrders();
+    calculateStats();
   }, [orders, searchTerm, statusFilter, paymentStatusFilter]);
 
   const fetchOrders = async () => {
@@ -88,13 +96,29 @@ const OrderManagement: React.FC = () => {
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const statsData = await orderService.getOrderStats();
-      setStats(statsData);
-    } catch (err: any) {
-      console.error("Error fetching stats:", err);
-    }
+  const calculateStats = () => {
+    // Calculate statistics from orders data
+    const totalOrders = orders.length;
+    const totalAmount = orders.reduce((sum, order) => {
+      return sum + (Number(order.totalAmount) || 0);
+    }, 0);
+
+    const statusCounts = orders.reduce((counts, order) => {
+      counts[order.status] = (counts[order.status] || 0) + 1;
+      return counts;
+    }, {} as Record<string, number>);
+
+    const paymentStatusCounts = orders.reduce((counts, order) => {
+      counts[order.paymentStatus] = (counts[order.paymentStatus] || 0) + 1;
+      return counts;
+    }, {} as Record<string, number>);
+
+    setStats({
+      totalOrders,
+      totalAmount,
+      statusCounts,
+      paymentStatusCounts,
+    });
   };
 
   const filterOrders = () => {
@@ -132,26 +156,27 @@ const OrderManagement: React.FC = () => {
 
     try {
       setUpdating(true);
-      await orderService.updateOrderStatus(selectedOrder.id, newStatus);
+      const updatedOrder = await orderService.updateOrderStatus(selectedOrder.id, newStatus);
 
-      // Update the order in the local state
+      // Update the order in the local state with the response from server
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === selectedOrder.id
-            ? { ...order, status: newStatus }
+          order.id === updatedOrder.id
+            ? updatedOrder
             : order,
         ),
       );
 
-      enqueueSnackbar("Order status updated successfully", {
-        variant: "success",
-      });
+      // Close dialog and reset state
       setUpdateDialogOpen(false);
       setSelectedOrder(null);
       setNewStatus("");
 
-      // Refresh stats
-      fetchStats();
+      enqueueSnackbar("Order status updated successfully", {
+        variant: "success",
+      });
+
+      // Stats will be recalculated automatically by useEffect
     } catch (err: any) {
       console.error("Error updating order status:", err);
       enqueueSnackbar(
@@ -165,7 +190,7 @@ const OrderManagement: React.FC = () => {
 
   const openUpdateDialog = (order: Order) => {
     setSelectedOrder(order);
-    setNewStatus(order.status);
+    setNewStatus(""); // Start with empty value to show placeholder
     setUpdateDialogOpen(true);
   };
 
@@ -189,6 +214,17 @@ const OrderManagement: React.FC = () => {
       default:
         return "default";
     }
+  };
+
+  const getValidStatusOptions = (currentStatus: string): string[] => {
+    const validTransitions: Record<string, string[]> = {
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["shipped", "cancelled"],
+      shipped: ["delivered"],
+      delivered: [],
+      cancelled: [],
+    };
+    return validTransitions[currentStatus] || [];
   };
 
   const getPaymentStatusColor = (status: string) => {
@@ -245,7 +281,6 @@ const OrderManagement: React.FC = () => {
           startIcon={<Refresh />}
           onClick={() => {
             fetchOrders();
-            fetchStats();
           }}
           variant="outlined"
         >
@@ -274,7 +309,7 @@ const OrderManagement: React.FC = () => {
                 Total Revenue
               </Typography>
               <Typography variant="h4" component="div" color="primary">
-                ${stats.totalAmount.toFixed(2)}
+                ${Number(stats.totalAmount).toFixed(2)}
               </Typography>
             </CardContent>
           </Card>
@@ -441,7 +476,7 @@ const OrderManagement: React.FC = () => {
                       fontWeight="medium"
                       color="primary"
                     >
-                      ${order.totalAmount.toFixed(2)}
+                      ${Number(order.totalAmount).toFixed(2)}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -463,14 +498,17 @@ const OrderManagement: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", gap: 1 }}>
-                      <Tooltip title="Update Status">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => openUpdateDialog(order)}
-                        >
-                          {getStatusIcon(order.status)}
-                        </IconButton>
+                      <Tooltip title={selectedOrder?.status === "delivered" ? "Cannot update delivered order" : "Update Status"}>
+                        <span>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => openUpdateDialog(order)}
+                            disabled={order.status === "delivered"}
+                          >
+                            {getStatusIcon(order.status)}
+                          </IconButton>
+                        </span>
                       </Tooltip>
                       <Tooltip title="View Details">
                         <IconButton
@@ -499,35 +537,59 @@ const OrderManagement: React.FC = () => {
       >
         <DialogTitle>Update Order Status</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Order: {selectedOrder?.orderNumber}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Product: {selectedOrder?.product?.name}
-          </Typography>
-          <FormControl fullWidth>
+          {selectedOrder?.status === "delivered" ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              This order has been delivered and cannot be modified.
+            </Alert>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                Order: {selectedOrder?.orderNumber}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Product: {selectedOrder?.product?.name}
+              </Typography>
+            </>
+          )}
+          <FormControl fullWidth disabled={selectedOrder?.status === "delivered"}>
             <InputLabel>New Status</InputLabel>
             <Select
               value={newStatus}
               label="New Status"
               onChange={(e) => setNewStatus(e.target.value)}
             >
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="confirmed">Confirmed</MenuItem>
-              <MenuItem value="shipped">Shipped</MenuItem>
-              <MenuItem value="delivered">Delivered</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
+              {getValidStatusOptions(selectedOrder?.status || "pending").map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
+          {selectedOrder?.status === "pending" && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Next step: Confirm the order
+            </Alert>
+          )}
+          {selectedOrder?.status === "confirmed" && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Next step: Ship the order
+            </Alert>
+          )}
+          {selectedOrder?.status === "shipped" && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Next step: Mark as delivered
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUpdateDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setUpdateDialogOpen(false)}>Close</Button>
           <Button
             onClick={handleStatusUpdate}
+            color="primary"
             variant="contained"
-            disabled={updating}
+            disabled={updating || selectedOrder?.status === "delivered"}
           >
-            {updating ? "Updating..." : "Update"}
+            {updating ? "Updating..." : "Update Status"}
           </Button>
         </DialogActions>
       </Dialog>

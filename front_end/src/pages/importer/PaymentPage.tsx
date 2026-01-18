@@ -416,7 +416,7 @@ const PaymentPage: React.FC = () => {
                 Quantity: {order.quantity}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Unit Price: ${order.unitPrice.toFixed(2)}
+                Unit Price: ${Number(order.unitPrice).toFixed(2)}
               </Typography>
             </Box>
 
@@ -424,7 +424,7 @@ const PaymentPage: React.FC = () => {
 
             <Box sx={{ mb: 3 }}>
               <Typography variant="h6" fontWeight="bold">
-                Total Amount: ${order.totalAmount.toFixed(2)}
+                Total Amount: ${Number(order.totalAmount).toFixed(2)}
               </Typography>
             </Box>
 
@@ -433,9 +433,12 @@ const PaymentPage: React.FC = () => {
                 Shipping Address:
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {order.shippingAddress.line1}, {order.shippingAddress.city},{" "}
-                {order.shippingAddress.state} {order.shippingAddress.postalCode}
-                , {order.shippingAddress.country}
+                {(() => {
+                  const addr = typeof order.shippingAddress === "string"
+                    ? JSON.parse(order.shippingAddress)
+                    : order.shippingAddress;
+                  return `${addr.line1}${addr.line2 ? ", " + addr.line2 : ""}, ${addr.city}, ${addr.state} ${addr.postalCode}, ${addr.country}`;
+                })()}
               </Typography>
             </Box>
 
@@ -497,7 +500,7 @@ const PaymentPage: React.FC = () => {
               Order #{order?.orderNumber}
             </Typography>
             <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-              Total Amount: ${order?.totalAmount.toFixed(2)}
+              Total Amount: ${Number(order?.totalAmount).toFixed(2)}
             </Typography>
 
             <FormControl component="fieldset" sx={{ mb: 3 }}>

@@ -164,12 +164,46 @@ export const orderController = {
         });
       }
 
-      const order = await orderRepo.updateOrderStatus(Number(id), status);
+      const order = await orderRepo.getOrderById(Number(id));
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found",
+        });
+      }
+
+      const currentStatus = order.getDataValue("status");
+
+      // Check if order is already delivered - cannot change status
+      if (currentStatus === "delivered") {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot change status of delivered order",
+        });
+      }
+
+      // Validate status progression - must follow: pending -> confirmed -> shipped -> delivered
+      const validTransitions: Record<string, string[]> = {
+        pending: ["confirmed", "cancelled"],
+        confirmed: ["shipped", "cancelled"],
+        shipped: ["delivered"],
+        delivered: [],
+        cancelled: [],
+      };
+
+      if (!validTransitions[currentStatus]?.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot change order status from ${currentStatus} to ${status}. Order must progress: pending → confirmed → shipped → delivered`,
+        });
+      }
+
+      const updatedOrder = await orderRepo.updateOrderStatus(Number(id), status);
 
       res.json({
         success: true,
         message: "Order status updated successfully",
-        data: order,
+        data: updatedOrder,
       });
     } catch (error) {
       console.error("Error updating order status:", error);
@@ -253,7 +287,7 @@ export const orderController = {
 
       // Check if order can be cancelled
       const currentStatus = order.getDataValue("status");
-      if (currentStatus === "delivered" || currentStatus === "cancelled") {
+      if (currentStatus === "confirmed" || currentStatus === "shipped" || currentStatus === "delivered" || currentStatus === "cancelled") {
         return res.status(400).json({
           success: false,
           message: `Order cannot be cancelled in ${currentStatus} status`,
@@ -362,20 +396,25 @@ export const orderController = {
 
       // Calculate statistics
       const totalOrders = orders.length;
-      const totalAmount = orders.reduce(
-        (sum: number, order: any) =>
-          sum + parseFloat(order.getDataValue("totalAmount")),
-        0,
-      );
+      const totalAmount = orders.reduce((sum: number, order: any) => {
+        const amount = order.getDataValue
+          ? order.getDataValue("totalAmount")
+          : order.totalAmount;
+        return sum + parseFloat(amount || 0);
+      }, 0);
 
       const statusCounts = orders.reduce((counts: any, order: any) => {
-        const status = order.getDataValue("status");
+        const status = order.getDataValue
+          ? order.getDataValue("status")
+          : order.status;
         counts[status] = (counts[status] || 0) + 1;
         return counts;
       }, {});
 
       const paymentStatusCounts = orders.reduce((counts: any, order: any) => {
-        const paymentStatus = order.getDataValue("paymentStatus");
+        const paymentStatus = order.getDataValue
+          ? order.getDataValue("paymentStatus")
+          : order.paymentStatus;
         counts[paymentStatus] = (counts[paymentStatus] || 0) + 1;
         return counts;
       }, {});
@@ -394,6 +433,7 @@ export const orderController = {
       res.status(500).json({
         success: false,
         message: "Error getting order statistics",
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   },

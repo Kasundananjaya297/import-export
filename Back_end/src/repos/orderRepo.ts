@@ -174,7 +174,29 @@ export const updateOrderStatus = async (id: number, status: string) => {
     }
 
     await order.update({ status });
-    return order;
+    
+    // Fetch updated order with all associations
+    const updatedOrder = await Order.findByPk(id, {
+      include: [
+        {
+          model: Product,
+          as: "product",
+          attributes: ["id", "name", "category", "price", "unit", "images"],
+        },
+        {
+          model: User,
+          as: "buyer",
+          attributes: ["id", "fname", "lname", "email", "company"],
+        },
+        {
+          model: User,
+          as: "seller",
+          attributes: ["id", "fname", "lname", "email", "company"],
+        },
+      ],
+    });
+    
+    return updatedOrder;
   } catch (error) {
     throw error;
   }
@@ -191,7 +213,29 @@ export const updatePaymentStatus = async (
     }
 
     await order.update({ paymentStatus });
-    return order;
+    
+    // Fetch updated order with all associations
+    const updatedOrder = await Order.findByPk(id, {
+      include: [
+        {
+          model: Product,
+          as: "product",
+          attributes: ["id", "name", "category", "price", "unit", "images"],
+        },
+        {
+          model: User,
+          as: "buyer",
+          attributes: ["id", "fname", "lname", "email", "company"],
+        },
+        {
+          model: User,
+          as: "seller",
+          attributes: ["id", "fname", "lname", "email", "company"],
+        },
+      ],
+    });
+    
+    return updatedOrder;
   } catch (error) {
     throw error;
   }
