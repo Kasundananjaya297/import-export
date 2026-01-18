@@ -25,6 +25,7 @@ import {
   DialogActions,
   IconButton,
   Tooltip,
+  Divider,
 } from "@mui/material";
 import { Search, Cancel, Refresh, Payment } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
@@ -360,79 +361,109 @@ const MyOrders: React.FC = () => {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: 4,
-                  }
+                    transform: 'translateY(-4px)',
+                    boxShadow: 6,
+                  },
+                  borderRadius: 2,
+                  overflow: 'hidden'
                 }}
                 onClick={() => handleOrderClick(order)}
               >
-                <CardContent>
-                  <Grid container spacing={2}>
+                <CardContent sx={{ p: 3 }}>
+                  <Grid container spacing={3}>
                     {/* Product Image */}
                     <Grid item xs={12} sm={3}>
                       <CardMedia
                         component="img"
-                        height="120"
+                        height="160"
                         image={
                           order.product?.images &&
                           order.product.images.length > 0
                             ? order.product.images[0]
-                            : "https://via.placeholder.com/200x120?text=No+Image"
+                            : "https://via.placeholder.com/200x160?text=No+Image"
                         }
                         alt={order.product?.name || "Product"}
-                        sx={{ objectFit: "cover", borderRadius: 1 }}
+                        sx={{ 
+                          objectFit: "cover", 
+                          borderRadius: 2,
+                          boxShadow: 2
+                        }}
                       />
                     </Grid>
 
                     {/* Order Details */}
-                    <Grid item xs={12} sm={5}>
-                      <Typography variant="h6" gutterBottom>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 1 }}>
                         {order.product?.name || "Product"}
                       </Typography>
                       <Typography
                         variant="body2"
                         color="text.secondary"
                         gutterBottom
+                        sx={{ fontWeight: 'medium', fontSize: '0.95rem' }}
                       >
                         Order #{order.orderNumber}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Quantity: {order.quantity}{" "}
-                        {order.product?.unit || "units"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Unit Price: ${Number(order.unitPrice).toFixed(2)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Order Date:{" "}
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </Typography>
-                      {order.seller && (
-                        <Typography variant="body2" color="text.secondary">
-                          Seller: {order.seller.fname} {order.seller.lname} (
-                          {order.seller.company})
+                      <Divider sx={{ my: 1.5 }} />
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8 }}>
+                        <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <strong>Quantity:</strong> {order.quantity} {order.product?.unit || "piece"}
                         </Typography>
-                      )}
+                        <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <strong>Unit Price:</strong> ${Number(order.unitPrice).toFixed(2)}
+                        </Typography>
+                        <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <strong>Order Date:</strong>{" "}
+                          {new Date(order.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric'
+                          })}
+                        </Typography>
+                        {order.seller && (
+                          <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <strong>Seller:</strong> {order.seller.fname} {order.seller.lname} ()
+                          </Typography>
+                        )}
+                      </Box>
                     </Grid>
 
                     {/* Status and Actions */}
-                    <Grid item xs={12} sm={4}>
-                      <Box textAlign="right">
-                        <Chip
-                          label={order.status}
-                          color={getStatusColor(order.status) as any}
-                          size="small"
-                          sx={{ mb: 1 }}
-                        />
-                        <Chip
-                          label={order.paymentStatus}
-                          color={
-                            getPaymentStatusColor(order.paymentStatus) as any
-                          }
-                          size="small"
-                          sx={{ mb: 2 }}
-                        />
-                        <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
+                    <Grid item xs={12} sm={3}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1.5 }}>
+                        {/* Status Badges */}
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Chip
+                            label={order.status}
+                            color={getStatusColor(order.status) as any}
+                            sx={{ 
+                              fontWeight: 'bold',
+                              textTransform: 'capitalize',
+                              px: 1.5
+                            }}
+                          />
+                          <Chip
+                            label={order.paymentStatus}
+                            color={
+                              getPaymentStatusColor(order.paymentStatus) as any
+                            }
+                            sx={{ 
+                              fontWeight: 'bold',
+                              textTransform: 'capitalize',
+                              px: 1.5
+                            }}
+                          />
+                        </Box>
+                        
+                        {/* Total Price */}
+                        <Typography 
+                          variant="h4" 
+                          color="primary" 
+                          sx={{ 
+                            fontWeight: 'bold',
+                            mt: 1
+                          }}
+                        >
                           ${Number(order.totalAmount).toFixed(2)}
                         </Typography>
 
@@ -497,19 +528,21 @@ const MyOrders: React.FC = () => {
                   )}
 
                   {order.shippingAddress && (
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Shipping Address:</strong>{" "}
-                        {typeof order.shippingAddress === "string"
-                          ? (() => {
-                              try {
-                                const addr = JSON.parse(order.shippingAddress);
-                                return `${addr.line1}${addr.line2 ? ", " + addr.line2 : ""}, ${addr.city}, ${addr.state} ${addr.postalCode}, ${addr.country}`;
-                              } catch {
-                                return order.shippingAddress;
-                              }
-                            })()
-                          : `${order.shippingAddress.line1}${order.shippingAddress.line2 ? ", " + order.shippingAddress.line2 : ""}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}`}
+                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                        <strong style={{ minWidth: '140px' }}>Shipping Address:</strong>{" "}
+                        <span>
+                          {typeof order.shippingAddress === "string"
+                            ? (() => {
+                                try {
+                                  const addr = JSON.parse(order.shippingAddress);
+                                  return `${addr.line1}${addr.line2 ? ", " + addr.line2 : ""}, ${addr.city}, ${addr.state} ${addr.postalCode}, ${addr.country}`;
+                                } catch {
+                                  return order.shippingAddress;
+                                }
+                              })()
+                            : `${order.shippingAddress.line1}${order.shippingAddress.line2 ? ", " + order.shippingAddress.line2 : ""}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}`}
+                        </span>
                       </Typography>
                     </Box>
                   )}
