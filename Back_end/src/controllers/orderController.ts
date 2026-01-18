@@ -44,7 +44,28 @@ export const orderController = {
         });
       }
 
-      const sellerId = product.getDataValue("userId");
+      const sellerId = product.getDataValue("userid");
+      console.log("Product found:", product.getDataValue("id"));
+      console.log("Seller ID extracted:", sellerId);
+      
+      if (!sellerId) {
+        return res.status(400).json({
+          success: false,
+          message: "Product does not have a valid seller",
+        });
+      }
+
+      // Check if product has enough quantity
+      const currentQuantity = product.getDataValue("quantity");
+      const orderQuantity = parseInt(quantity);
+      
+      if (currentQuantity < orderQuantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock. Only ${currentQuantity} ${product.getDataValue("unit")} available.`,
+        });
+      }
+
       const totalAmount = parseFloat(unitPrice) * parseInt(quantity);
 
       const orderData = {
@@ -60,6 +81,11 @@ export const orderController = {
       };
 
       const order = await orderRepo.createOrder(orderData);
+
+      // Update product quantity - reduce by ordered amount
+      const newQuantity = currentQuantity - orderQuantity;
+      await productRepo.updateProductQuantity(Number(productId), newQuantity);
+      console.log(`Product ${productId} quantity updated from ${currentQuantity} to ${newQuantity}`);
 
       res.status(201).json({
         success: true,
@@ -294,11 +320,24 @@ export const orderController = {
         });
       }
 
+      // Get order details to restore quantity
+      const productId = order.getDataValue("productId");
+      const orderQuantity = order.getDataValue("quantity");
+
       // Update order status to cancelled
       const updatedOrder = await orderRepo.updateOrderStatus(
         Number(id),
         "cancelled",
       );
+
+      // Restore product quantity
+      const product = await productRepo.getProductById(productId);
+      if (product) {
+        const currentQuantity = product.getDataValue("quantity");
+        const newQuantity = currentQuantity + orderQuantity;
+        await productRepo.updateProductQuantity(productId, newQuantity);
+        console.log(`Product ${productId} quantity restored from ${currentQuantity} to ${newQuantity} after order cancellation`);
+      }
 
       res.json({
         success: true,

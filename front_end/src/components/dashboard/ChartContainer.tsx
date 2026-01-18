@@ -37,7 +37,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
         )}
       </Box>
       <Divider sx={{ mb: 2 }} />
-      <Box sx={{ height, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ height, minHeight: height, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {children}
       </Box>
     </Paper>

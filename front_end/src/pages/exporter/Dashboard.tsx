@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -9,6 +9,7 @@ import {
   Divider,
   List,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import {
   Inventory as InventoryIcon,
@@ -36,62 +37,153 @@ import StatCard from "../../components/dashboard/StatCard";
 import ChartContainer from "../../components/dashboard/ChartContainer";
 import RecentActivityItem from "../../components/dashboard/RecentActivityItem";
 import { useNavigate } from "react-router-dom";
+import { orderService } from "../../services/orderService";
+import { productService } from "../../services/productService";
+import { complaintService } from "../../services/complaintService";
 
 const COLORS = ["#1976D2", "#90CAF9", "#42A5F5", "#64B5F6", "#2196F3"];
-
-// Mock data - replace with actual data from your backend
-const exporterStats = {
-  totalProducts: 25,
-  activeOrders: 8,
-  completedOrders: 45,
-  totalRevenue: 125000,
-  productCategories: [
-    { category: "Tea", count: 10 },
-    { category: "Spices", count: 8 },
-    { category: "Coconut", count: 5 },
-    { category: "Rubber", count: 2 },
-  ],
-  pendingOrders: 3,
-  processingOrders: 5,
-  shippedOrders: 2,
-  deliveredOrders: 45,
-  cancelledOrders: 1,
-};
 
 const ExporterDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    activeOrders: 0,
+    completedOrders: 0,
+    totalRevenue: 0,
+    pendingOrders: 0,
+    confirmedOrders: 0,
+    shippedOrders: 0,
+    deliveredOrders: 0,
+    cancelledOrders: 0,
+    openComplaints: 0,
+    resolvedComplaints: 0,
+  });
+  const [productCategories, setProductCategories] = useState<any[]>([]);
 
-  // Mock data - replace with actual data from your backend
-  const recentOrders = [
-    {
-      id: 1,
-      orderNumber: "ORD001",
-      buyerName: "Global Imports Inc",
-      products: ["Ceylon Tea", "Black Pepper"],
-      status: "processing",
-      createdAt: "2024-03-15T10:30:00",
-    },
-    {
-      id: 2,
-      orderNumber: "ORD002",
-      buyerName: "Spice Traders Ltd",
-      products: ["Cinnamon", "Cardamom"],
-      status: "shipped",
-      createdAt: "2024-03-14T15:45:00",
-    },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const recentComplaints = [
-    {
-      id: 1,
-      subject: "Product Quality Issue",
-      orderNumber: "ORD001",
-      buyerName: "Global Imports Inc",
-      status: "open",
-      createdAt: "2024-03-15T11:20:00",
-    },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [ordersData, productsData, complaintsData] = await Promise.all([
+        orderService.getSellerOrders(),
+        productService.getProductByUserId(),
+        complaintService.getSellerComplaints()
+      ]);
+
+      setOrders(ordersData);
+      setProducts(productsData);
+      setComplaints(complaintsData);
+
+      // Calculate stats
+      const totalProducts = productsData.length;
+      const completedOrders = ordersData.filter(
+        (o: any) => o.status === "delivered"
+      ).length;
+      const activeOrders = ordersData.filter(
+        (o: any) =>
+          o.status === "confirmed" ||
+          o.status === "shipped" ||
+          o.status === "pending"
+      ).length;
+      const totalRevenue = ordersData
+        .filter((o: any) => o.status === "delivered")
+        .reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount || 0), 0);
+
+      const pendingOrders = ordersData.filter(
+        (o: any) => o.status === "pending"
+      ).length;
+      const confirmedOrders = ordersData.filter(
+        (o: any) => o.status === "confirmed"
+      ).length;
+      const shippedOrders = ordersData.filter(
+        (o: any) => o.status === "shipped"
+      ).length;
+      const deliveredOrders = ordersData.filter(
+        (o: any) => o.status === "delivered"
+      ).length;
+      const cancelledOrders = ordersData.filter(
+        (o: any) => o.status === "cancelled"
+      ).length;
+      const openComplaints = complaintsData.filter(
+        (c: any) => c.status === "open" || c.status === "in_progress"
+      ).length;
+      const resolvedComplaints = complaintsData.filter(
+        (c: any) => c.status === "resolved" || c.status === "closed"
+      ).length;
+
+      setStats({
+        totalProducts,
+        activeOrders,
+        completedOrders,
+        totalRevenue,
+        pendingOrders,
+        confirmedOrders,
+        shippedOrders,
+        deliveredOrders,
+        cancelledOrders,
+        openComplaints,
+        resolvedComplaints,
+      });
+
+      // Calculate product categories
+      const categoryMap = new Map<string, number>();
+      productsData.forEach((product: any) => {
+        if (product.category) {
+          const category = product.category;
+          categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+        }
+      });
+
+      const categories = Array.from(categoryMap.entries()).map(
+        ([category, count]) => ({
+          category,
+          count,
+        })
+      );
+      setProductCategories(categories);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get recent orders (last 3)
+  const recentOrders = [...orders]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 3);
+
+  // Get recent complaints (last 3)
+  const recentComplaints = [...complaints]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 3);
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -125,7 +217,7 @@ const ExporterDashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Products"
-            value={exporterStats.totalProducts}
+            value={stats.totalProducts}
             icon={<InventoryIcon fontSize="large" />}
             subtitle="Listed products"
           />
@@ -133,16 +225,15 @@ const ExporterDashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Active Orders"
-            value={exporterStats.activeOrders}
+            value={stats.activeOrders}
             icon={<LocalShippingIcon fontSize="large" />}
             subtitle="In progress"
-            change={{ value: 12, isPositive: true }}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Completed Orders"
-            value={exporterStats.completedOrders}
+            value={stats.completedOrders}
             icon={<CheckCircleIcon fontSize="large" />}
             subtitle="Successfully delivered"
           />
@@ -150,9 +241,20 @@ const ExporterDashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Revenue"
-            value={`$${exporterStats.totalRevenue.toLocaleString()}`}
+            value={`$${stats.totalRevenue.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`}
             icon={<MoneyIcon fontSize="large" />}
             subtitle="All time"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Complaints"
+            value={stats.openComplaints}
+            icon={<SupportAgentIcon fontSize="large" />}
+            subtitle={`${stats.resolvedComplaints} resolved`}
           />
         </Grid>
 
@@ -161,15 +263,16 @@ const ExporterDashboard: React.FC = () => {
           <ChartContainer
             title="Orders by Status"
             subtitle="Current distribution of your orders"
+            height={350}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={[
-                  { name: "Pending", value: exporterStats.pendingOrders },
-                  { name: "Processing", value: exporterStats.processingOrders },
-                  { name: "Shipped", value: exporterStats.shippedOrders },
-                  { name: "Delivered", value: exporterStats.deliveredOrders },
-                  { name: "Cancelled", value: exporterStats.cancelledOrders },
+                  { name: "Pending", value: stats.pendingOrders },
+                  { name: "Confirmed", value: stats.confirmedOrders },
+                  { name: "Shipped", value: stats.shippedOrders },
+                  { name: "Delivered", value: stats.deliveredOrders },
+                  { name: "Cancelled", value: stats.cancelledOrders },
                 ]}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
@@ -188,11 +291,12 @@ const ExporterDashboard: React.FC = () => {
           <ChartContainer
             title="Product Categories"
             subtitle="Distribution of your products"
+            height={350}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={exporterStats.productCategories}
+                  data={productCategories}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -204,7 +308,7 @@ const ExporterDashboard: React.FC = () => {
                     `${name}: ${(percent * 100).toFixed(0)}%`
                   }
                 >
-                  {exporterStats.productCategories.map((entry, index) => (
+                  {productCategories.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -240,7 +344,7 @@ const ExporterDashboard: React.FC = () => {
               <Typography variant="h6" sx={{ fontWeight: "medium" }}>
                 Recent Orders
               </Typography>
-              <Button variant="text" size="small">
+              <Button variant="text" size="small" onClick={() => navigate("/exporter/orders")}>
                 View All
               </Button>
             </Box>
@@ -251,7 +355,7 @@ const ExporterDashboard: React.FC = () => {
                   <RecentActivityItem
                     key={order.id}
                     primaryText={`Order #${order.orderNumber}`}
-                    secondaryText={`${order.products.length} products for ${order.buyerName}`}
+                    secondaryText={`${order.quantity} ${order.product?.unit || "items"} - ${order.product?.name || "Product"}`}
                     timestamp={order.createdAt}
                     status={
                       order.status === "cancelled"
@@ -301,7 +405,7 @@ const ExporterDashboard: React.FC = () => {
               <Typography variant="h6" sx={{ fontWeight: "medium" }}>
                 Recent Complaints
               </Typography>
-              <Button variant="text" size="small">
+              <Button variant="text" size="small" onClick={() => navigate("/exporter/complaints")}>
                 View All
               </Button>
             </Box>
@@ -312,13 +416,13 @@ const ExporterDashboard: React.FC = () => {
                   <RecentActivityItem
                     key={complaint.id}
                     primaryText={complaint.subject}
-                    secondaryText={`Order #${complaint.orderNumber} - ${complaint.buyerName}`}
+                    secondaryText={`${complaint.category} - Priority: ${complaint.priority}`}
                     timestamp={complaint.createdAt}
                     status={
-                      complaint.status === "resolved"
+                      complaint.status === "resolved" || complaint.status === "closed"
                         ? "success"
-                        : complaint.status === "open"
-                        ? "error"
+                        : complaint.status === "in_progress"
+                        ? "info"
                         : "warning"
                     }
                     statusText={complaint.status}

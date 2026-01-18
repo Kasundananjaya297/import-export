@@ -31,5 +31,5 @@ export interface IProduct {
   origin: string;
   certification: string;
   images: string[]; // Array of image URLs
-  userId: number;
+  userid: number;
 }

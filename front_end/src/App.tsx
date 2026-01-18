@@ -22,6 +22,7 @@ import PlaceOrder from "./pages/importer/PlaceOrder";
 import MyOrders from "./pages/importer/MyOrders";
 import PaymentPage from "./pages/importer/PaymentPage";
 import TestPaymentPage from "./pages/importer/TestPaymentPage";
+import SubmitComplaint from "./pages/importer/SubmitComplaint";
 import { ComplaintsPage } from "./pages/Complaints";
 
 // Exporter Pages
@@ -98,6 +99,14 @@ function App() {
                   element={
                     <ProtectedRoute roles={["importer", "admin"]}>
                       <MyOrders />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/importer/complaint"
+                  element={
+                    <ProtectedRoute roles={["importer", "admin"]}>
+                      <SubmitComplaint />
                     </ProtectedRoute>
                   }
                 />

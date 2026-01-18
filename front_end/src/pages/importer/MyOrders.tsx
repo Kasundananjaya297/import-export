@@ -59,13 +59,23 @@ const MyOrders: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
+      setError(""); // Clear previous errors
       const ordersData = await orderService.getBuyerOrders();
-
       setOrders(ordersData);
     } catch (err: any) {
       console.error("Error fetching orders:", err);
-      setError(err.response?.data?.message || "Failed to fetch orders");
-      enqueueSnackbar("Failed to fetch orders", { variant: "error" });
+      const errorMessage = err.response?.data?.message || "Failed to fetch orders";
+      setError(errorMessage);
+      
+      // If it's an auth error, show a specific message
+      if (err.response?.status === 401) {
+        enqueueSnackbar("Session expired. Please log out and log in again.", { 
+          variant: "error",
+          autoHideDuration: 5000 
+        });
+      } else {
+        enqueueSnackbar(errorMessage, { variant: "error" });
+      }
     } finally {
       setLoading(false);
     }

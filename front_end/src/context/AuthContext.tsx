@@ -46,9 +46,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Store the user data and token
         const userData = {
           ...response.data.data,
-          token: response.data.jwt,
+          token: response.data.data.jwt, // JWT is inside response.data.data
           role: response.data.data.role,
         };
+        console.log("Login successful, storing user data:", userData);
         setCurrentUser(userData);
         setIsAuthenticated(true);
         localStorage.setItem("currentUser", JSON.stringify(userData));

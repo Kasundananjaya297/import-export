@@ -63,11 +63,19 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const currentUser = localStorage.getItem("currentUser");
+    console.log("OrderService - currentUser from localStorage:", currentUser);
     if (currentUser) {
       const userData = JSON.parse(currentUser);
-      if (userData.jwt) {
-        config.headers.Authorization = `Bearer ${userData.jwt}`;
+      console.log("OrderService - parsed userData:", userData);
+      console.log("OrderService - token:", userData.token);
+      if (userData.token) {
+        config.headers.Authorization = `Bearer ${userData.token}`;
+        console.log("OrderService - Authorization header set:", config.headers.Authorization);
+      } else {
+        console.warn("OrderService - No token found in userData");
       }
+    } else {
+      console.warn("OrderService - No currentUser in localStorage");
     }
     return config;
   },

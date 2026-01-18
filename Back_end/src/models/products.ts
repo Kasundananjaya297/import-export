@@ -55,9 +55,10 @@ Product.init(
       type: DataTypes.JSON, // Store image URLs as JSON array
       allowNull: false,
     },
-    userId: {
+    userid: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'userid', // Explicitly map to lowercase column name
       references: {
         model: "User",
         key: "id",

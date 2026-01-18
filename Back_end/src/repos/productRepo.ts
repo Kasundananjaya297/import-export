@@ -53,10 +53,20 @@ export const findOneProduct = async (where: any) => {
 export const getProductByUserId = async (id: number) => {
   console.log("Repository received userId:", id, "Type:", typeof id);
   const products = await Product.findAll({
-    where: { userId: id },
+    where: { userid: id },
   });
-  console.log("Query executed with userId:", id);
+  console.log("Query executed with userid:", id);
+  console.log("Found products:", products.length);
   return products;
+};
+
+export const updateProductQuantity = async (productId: number, newQuantity: number) => {
+  const product = await Product.findByPk(productId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  await product.update({ quantity: newQuantity });
+  return product;
 };
 
 export const deleteProduct = async (product: any) => {

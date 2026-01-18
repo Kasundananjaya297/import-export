@@ -58,7 +58,7 @@ export const productController = {
         origin: origin || "",
         certification: certification || "",
         images: imageUrls,
-        userId: authenticatedUserId,
+        userid: authenticatedUserId,
       });
 
       res.status(201).json({

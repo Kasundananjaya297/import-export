@@ -7,6 +7,7 @@ import userRoutes from "./routes/userRouts";
 import productRoutes from "./routes/productRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
+import complaintRoutes from "./routes/complaintRoutes";
 import cors from "cors";
 // Import models with associations
 import "./models/index";
@@ -69,6 +70,9 @@ app.use("/api/order", orderRoutes);
 
 // Payment Routes
 app.use("/api/payment", paymentRoutes);
+
+// Complaint Routes
+app.use("/api/complaint", complaintRoutes);
 
 // Serve static files for uploaded images
 app.use("/shared/uploads", express.static("shared/uploads"));

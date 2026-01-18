@@ -96,8 +96,8 @@ api.interceptors.request.use(
     const currentUser = localStorage.getItem("currentUser");
     if (currentUser) {
       const userData = JSON.parse(currentUser);
-      if (userData.jwt) {
-        config.headers.Authorization = `Bearer ${userData.jwt}`;
+      if (userData.token) {
+        config.headers.Authorization = `Bearer ${userData.token}`;
       }
     }
     return config;

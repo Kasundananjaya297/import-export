@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -9,12 +9,12 @@ import {
   Divider,
   List,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import {
   ShoppingCart as ShoppingCartIcon,
   LocalShipping as LocalShippingIcon,
   CheckCircle as CheckCircleIcon,
-  Money as MoneyIcon,
   SupportAgent as SupportAgentIcon,
 } from "@mui/icons-material";
 import {
@@ -32,36 +32,153 @@ import {
 } from "recharts";
 
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import StatCard from "../../components/dashboard/StatCard";
 import ChartContainer from "../../components/dashboard/ChartContainer";
 import RecentActivityItem from "../../components/dashboard/RecentActivityItem";
-import { importerStats } from "../../data/stats";
-import { orders } from "../../data/orders";
-import { complaints } from "../../data/complaints";
+import { orderService } from "../../services/orderService";
+import { complaintService } from "../../services/complaintService";
 
 const COLORS = ["#1976D2", "#90CAF9", "#42A5F5", "#64B5F6", "#2196F3"];
 
 const ImporterDashboard: React.FC = () => {
   const { currentUser } = useAuth();
-  
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    activeOrders: 0,
+    completedOrders: 0,
+    totalSpent: 0,
+    pendingOrders: 0,
+    confirmedOrders: 0,
+    shippedOrders: 0,
+    deliveredOrders: 0,
+    cancelledOrders: 0,
+    openComplaints: 0,
+    resolvedComplaints: 0,
+  });
+  const [productCategories, setProductCategories] = useState<any[]>([]);
 
-  // Filter orders for the current user
-  const userOrders = orders.filter(
-    (order) => order.buyerId === currentUser?.id,
-  );
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  // Filter complaints for the current user
-  const userComplaints = complaints.filter(
-    (complaint) => complaint.buyerId === currentUser?.id,
-  );
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [ordersData, complaintsData] = await Promise.all([
+        orderService.getBuyerOrders(),
+        complaintService.getBuyerComplaints()
+      ]);
+      setOrders(ordersData);
+      setComplaints(complaintsData);
+
+      // Calculate stats
+      const totalOrders = ordersData.length;
+      const completedOrders = ordersData.filter(
+        (o: any) => o.status === "delivered"
+      ).length;
+      const activeOrders = ordersData.filter(
+        (o: any) =>
+          o.status === "confirmed" ||
+          o.status === "shipped" ||
+          o.status === "pending"
+      ).length;
+      const totalSpent = ordersData.reduce(
+        (sum: number, o: any) => sum + parseFloat(o.totalAmount || 0),
+        0
+      );
+
+      const pendingOrders = ordersData.filter(
+        (o: any) => o.status === "pending"
+      ).length;
+      const confirmedOrders = ordersData.filter(
+        (o: any) => o.status === "confirmed"
+      ).length;
+      const shippedOrders = ordersData.filter(
+        (o: any) => o.status === "shipped"
+      ).length;
+      const deliveredOrders = ordersData.filter(
+        (o: any) => o.status === "delivered"
+      ).length;
+      const cancelledOrders = ordersData.filter(
+        (o: any) => o.status === "cancelled"
+      ).length;
+      const openComplaints = complaintsData.filter(
+        (c: any) => c.status === "open" || c.status === "in_progress"
+      ).length;
+      const resolvedComplaints = complaintsData.filter(
+        (c: any) => c.status === "resolved" || c.status === "closed"
+      ).length;
+
+      setStats({
+        totalOrders,
+        activeOrders,
+        completedOrders,
+        totalSpent,
+        pendingOrders,
+        confirmedOrders,
+        shippedOrders,
+        deliveredOrders,
+        cancelledOrders,
+        openComplaints,
+        resolvedComplaints,
+      });
+
+      // Calculate product categories
+      const categoryMap = new Map<string, number>();
+      ordersData.forEach((order: any) => {
+        if (order.product?.category) {
+          const category = order.product.category;
+          categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+        }
+      });
+
+      const categories = Array.from(categoryMap.entries()).map(
+        ([category, count]) => ({
+          category,
+          count,
+        })
+      );
+      setProductCategories(categories);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get recent orders (last 3)
-  const recentOrders = [...userOrders]
+  const recentOrders = [...orders]
     .sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
     .slice(0, 3);
+
+  // Get recent complaints (last 3)
+  const recentComplaints = [...complaints]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 3);
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -70,7 +187,7 @@ const ImporterDashboard: React.FC = () => {
           Welcome, {currentUser?.fname}
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          Here's what's happening with your imports
+          Your import orders and purchase statistics
         </Typography>
       </Box>
 
@@ -78,54 +195,63 @@ const ImporterDashboard: React.FC = () => {
         {/* Statistics Cards */}
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Total Orders"
-            value={importerStats.totalOrders}
+            title="Orders Placed"
+            value={stats.totalOrders}
             icon={<ShoppingCartIcon fontSize="large" />}
-            subtitle="All time"
+            subtitle="Total purchases"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Active Orders"
-            value={importerStats.processingOrders + importerStats.shippedOrders}
+            value={stats.activeOrders}
             icon={<LocalShippingIcon fontSize="large" />}
-            subtitle="In progress"
-            change={{ value: 12, isPositive: true }}
+            subtitle="Being processed"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Completed Orders"
-            value={importerStats.deliveredOrders}
+            title="Completed"
+            value={stats.completedOrders}
             icon={<CheckCircleIcon fontSize="large" />}
-            subtitle="Successfully delivered"
+            subtitle="Received orders"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Complaints"
-            value={userComplaints.length}
+            title="Total Spent"
+            value={`$${stats.totalSpent.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`}
+            icon={<ShoppingCartIcon fontSize="large" />}
+            subtitle="All purchases"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="My Complaints"
+            value={stats.openComplaints}
             icon={<SupportAgentIcon fontSize="large" />}
-            subtitle={`${
-              userComplaints.filter((c) => c.status === "resolved").length
-            } resolved`}
+            subtitle={`${stats.resolvedComplaints} resolved`}
           />
         </Grid>
 
         {/* Order Status Chart */}
         <Grid item xs={12} md={8}>
           <ChartContainer
-            title="Orders by Status"
-            subtitle="Current distribution of your orders"
+            title="My Order Status"
+            subtitle="Current status of your purchase orders"
+            height={350}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={[
-                  { name: "Pending", value: importerStats.pendingOrders },
-                  { name: "Processing", value: importerStats.processingOrders },
-                  { name: "Shipped", value: importerStats.shippedOrders },
-                  { name: "Delivered", value: importerStats.deliveredOrders },
-                  { name: "Cancelled", value: importerStats.cancelledOrders },
+                  { name: "Pending", value: stats.pendingOrders },
+                  { name: "Confirmed", value: stats.confirmedOrders },
+                  { name: "Shipped", value: stats.shippedOrders },
+                  { name: "Delivered", value: stats.deliveredOrders },
+                  { name: "Cancelled", value: stats.cancelledOrders },
                 ]}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
@@ -142,13 +268,14 @@ const ImporterDashboard: React.FC = () => {
         {/* Product Categories Pie Chart */}
         <Grid item xs={12} md={4}>
           <ChartContainer
-            title="Product Categories"
-            subtitle="Distribution of ordered products"
+            title="Products Purchased"
+            subtitle="Categories of items you ordered"
+            height={350}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={importerStats.productCategories}
+                  data={productCategories}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -160,7 +287,7 @@ const ImporterDashboard: React.FC = () => {
                     `${name}: ${(percent * 100).toFixed(0)}%`
                   }
                 >
-                  {importerStats.productCategories.map((entry, index) => (
+                  {productCategories.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -194,9 +321,9 @@ const ImporterDashboard: React.FC = () => {
               }}
             >
               <Typography variant="h6" sx={{ fontWeight: "medium" }}>
-                Recent Orders
+                My Recent Orders
               </Typography>
-              <Button variant="text" size="small">
+              <Button variant="text" size="small" onClick={() => navigate("/importer/orders")}>
                 View All
               </Button>
             </Box>
@@ -207,7 +334,7 @@ const ImporterDashboard: React.FC = () => {
                   <RecentActivityItem
                     key={order.id}
                     primaryText={`Order #${order.orderNumber}`}
-                    secondaryText={`${order.products.length} products from ${order.sellerName}`}
+                    secondaryText={`${order.quantity} ${order.product?.unit || "items"} - ${order.product?.name || "Product"}`}
                     timestamp={order.createdAt}
                     status={
                       order.status === "cancelled"
@@ -255,26 +382,26 @@ const ImporterDashboard: React.FC = () => {
               }}
             >
               <Typography variant="h6" sx={{ fontWeight: "medium" }}>
-                Recent Complaints
+                My Recent Complaints
               </Typography>
-              <Button variant="text" size="small">
+              <Button variant="text" size="small" onClick={() => navigate("/importer/complaint")}>
                 View All
               </Button>
             </Box>
             <Divider sx={{ mb: 2 }} />
             <List sx={{ p: 0 }}>
-              {userComplaints.length > 0 ? (
-                userComplaints.map((complaint) => (
+              {recentComplaints.length > 0 ? (
+                recentComplaints.map((complaint) => (
                   <RecentActivityItem
                     key={complaint.id}
                     primaryText={complaint.subject}
-                    secondaryText={`Order #${complaint.orderNumber} - ${complaint.sellerName}`}
+                    secondaryText={`${complaint.category} - Priority: ${complaint.priority}`}
                     timestamp={complaint.createdAt}
                     status={
-                      complaint.status === "resolved"
+                      complaint.status === "resolved" || complaint.status === "closed"
                         ? "success"
-                        : complaint.status === "open"
-                        ? "error"
+                        : complaint.status === "in_progress"
+                        ? "info"
                         : "warning"
                     }
                     statusText={complaint.status}
