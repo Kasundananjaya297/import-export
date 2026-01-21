@@ -1,30 +1,9 @@
 /** @format */
 
 import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  Container,
-  Link,
-  Grid,
-  Avatar,
-  InputAdornment,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-} from "@mui/material";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
-import {
-  Visibility,
-  VisibilityOff,
-  AppRegistration,
-} from "@mui/icons-material";
+import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
+import LogoOne from "../../assets/LogoFish.png";
 import { useAuth } from "../../context/AuthContext";
 import { useSnackbar } from "notistack";
 import { RegisterData } from "../../services/authService";
@@ -56,17 +35,12 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  };
-
-  const handleSelectChange = (e: SelectChangeEvent) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const validateForm = () => {
@@ -119,6 +93,7 @@ const Register: React.FC = () => {
         contact: formData.contact,
         password: formData.password,
         role: formData.role,
+        company: formData.company,
       };
       const res = await register(registerData);
       if (res.status === 201) {
@@ -140,350 +115,260 @@ const Register: React.FC = () => {
     }
   };
 
+  // Helper class strings sharing Login.tsx styles
+  const inputClass = "w-full p-3 rounded-3xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 transition-all";
+  const labelClass = "block text-sm text-slate-600 mb-1";
+  const errorClass = "text-red-500 text-xs mt-1 ml-1";
+
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "row",
-        bgcolor: "background.default",
-      }}
-    >
-      {/* Left side - Hero image (hidden on small screens) */}
-      <Box
-        sx={{
-          display: { xs: "none", md: "flex" },
-          flex: 1,
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundImage:
-            "url(https://images.pexels.com/photos/7096339/pexels-photo-7096339.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          position: "relative",
-          color: "white",
-        }}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(13, 71, 161, 0.7)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 6,
-          }}
-        >
-          <Typography
-            variant="h3"
-            component="h1"
-            sx={{ mb: 3, fontWeight: 700 }}
-          >
-            Join Ceylon Trade
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{ mb: 4, maxWidth: "80%", textAlign: "center" }}
-          >
-            Create an account to start trading globally
-          </Typography>
-          <Box sx={{ maxWidth: "80%" }}>
-            <Typography variant="body1" sx={{ mb: 2 }}>
-              Register today to access our platform's full features and connect
-              with businesses worldwide.
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-white py-10">
+      <div className="bg-white p-8 rounded-2xl w-full max-w-4xl z-10 mx-4 shadow-2xl border border-slate-100">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-slate-800">
+            Create Account
+          </h2>
+          <p className="text-slate-500 mt-2">Join us to start trading globally</p>
+        </div>
 
-      {/* Right side - Registration form */}
-      <Box
-        sx={{
-          flex: { xs: 1, md: 0.6 },
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          p: { xs: 2, sm: 4 },
-        }}
-      >
-        <Container maxWidth="sm">
-          <Paper
-            elevation={3}
-            sx={{
-              p: { xs: 3, sm: 5 },
-              borderRadius: 2,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-            className="fade-in"
-          >
-            <Avatar
-              sx={{ m: 1, bgcolor: "primary.main", width: 60, height: 60 }}
-            >
-              <AppRegistration fontSize="large" />
-            </Avatar>
-            <Typography
-              component="h1"
-              variant="h5"
-              sx={{ mb: 3, fontWeight: 600 }}
-            >
-              Create Your Account
-            </Typography>
-
-            <Box
-              component="form"
-              onSubmit={handleSubmit}
-              sx={{ width: "100%", mt: 1 }}
-            >
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="fname"
-                    label="First Name"
-                    name="fname"
-                    value={formData.fname}
-                    onChange={handleChange}
-                    error={!!errors.fname}
-                    helperText={errors.fname}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="lname"
-                    label="Last Name"
-                    name="lname"
-                    value={formData.lname}
-                    onChange={handleChange}
-                    error={!!errors.lname}
-                    helperText={errors.lname}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="gender-label">Gender</InputLabel>
-                    <Select
-                      labelId="gender-label"
-                      id="gender"
-                      name="gender"
-                      value={formData.gender}
-                      label="Gender"
-                      onChange={handleSelectChange}
-                    >
-                      <MenuItem value="male">Male</MenuItem>
-                      <MenuItem value="female">Female</MenuItem>
-                      <MenuItem value="other">Other</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="addressLine1"
-                    label="Address Line 1"
-                    name="addressLine1"
-                    value={formData.addressLine1}
-                    onChange={handleChange}
-                    error={!!errors.addressLine1}
-                    helperText={errors.addressLine1}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    id="addressLine2"
-                    label="Address Line 2"
-                    name="addressLine2"
-                    value={formData.addressLine2}
-                    onChange={handleChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="city"
-                    label="City"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    error={!!errors.city}
-                    helperText={errors.city}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="state"
-                    label="State"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    error={!!errors.state}
-                    helperText={errors.state}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="zipCode"
-                    label="ZIP Code"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleChange}
-                    error={!!errors.zipCode}
-                    helperText={errors.zipCode}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="country"
-                    label="Country"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="email"
-                    label="Email Address"
-                    name="email"
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    error={!!errors.email}
-                    helperText={errors.email}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="contact"
-                    label="Contact Number"
-                    name="contact"
-                    value={formData.contact}
-                    onChange={handleChange}
-                    error={!!errors.contact}
-                    helperText={errors.contact}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    name="password"
-                    label="Password"
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    error={!!errors.password}
-                    helperText={errors.password}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    name="confirmPassword"
-                    label="Confirm Password"
-                    type={showPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    error={!!errors.confirmPassword}
-                    helperText={errors.confirmPassword}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="company"
-                    label="Company Name"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleChange}
-                    error={!!errors.company}
-                    helperText={errors.company}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="role-label">Account Type</InputLabel>
-                    <Select
-                      labelId="role-label"
-                      id="role"
-                      name="role"
-                      value={formData.role}
-                      label="Account Type"
-                      onChange={handleSelectChange}
-                    >
-                      <MenuItem value="importer">Importer</MenuItem>
-                      <MenuItem value="exporter">Exporter</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={isSubmitting}
-                sx={{
-                  mt: 3,
-                  mb: 2,
-                  py: 1.5,
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                }}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Personal Info */}
+          <h3 className="text-lg font-semibold text-slate-700 border-b pb-2">Personal Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>First Name</label>
+              <input
+                name="fname"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.fname}
+                onChange={handleChange}
+                placeholder="John"
+              />
+              {errors.fname && <p className={errorClass}>{errors.fname}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Last Name</label>
+              <input
+                name="lname"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.lname}
+                onChange={handleChange}
+                placeholder="Doe"
+              />
+              {errors.lname && <p className={errorClass}>{errors.lname}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Gender</label>
+              <select
+                name="gender"
+                className={`${inputClass} appearance-none`}
+                value={formData.gender}
+                onChange={handleChange}
+                required
               >
-                {isSubmitting ? "Creating Account..." : "Create Account"}
-              </Button>
-              <Grid container justifyContent="flex-end">
-                <Grid item>
-                  <Link component={RouterLink} to="/login" variant="body2">
-                    Already have an account? Sign in
-                  </Link>
-                </Grid>
-              </Grid>
-            </Box>
-          </Paper>
-        </Container>
-      </Box>
-    </Box>
+                <option value="" disabled>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+              {errors.gender && <p className={errorClass}>{errors.gender}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Contact Number</label>
+              <input
+                name="contact"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.contact}
+                onChange={handleChange}
+                placeholder="+1 234 567 890"
+              />
+              {errors.contact && <p className={errorClass}>{errors.contact}</p>}
+            </div>
+          </div>
+
+          {/* Address Info */}
+          <h3 className="text-lg font-semibold text-slate-700 border-b pb-2 mt-6">Address</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className={labelClass}>Address Line 1</label>
+              <input
+                name="addressLine1"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.addressLine1}
+                onChange={handleChange}
+                placeholder="123 Main St"
+              />
+              {errors.addressLine1 && <p className={errorClass}>{errors.addressLine1}</p>}
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>Address Line 2 (Optional)</label>
+              <input
+                name="addressLine2"
+                type="text"
+                className={inputClass}
+                value={formData.addressLine2}
+                onChange={handleChange}
+                placeholder="Apt 4B"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>City</label>
+              <input
+                name="city"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.city}
+                onChange={handleChange}
+                placeholder="New York"
+              />
+              {errors.city && <p className={errorClass}>{errors.city}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>State</label>
+              <input
+                name="state"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.state}
+                onChange={handleChange}
+                placeholder="NY"
+              />
+              {errors.state && <p className={errorClass}>{errors.state}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>ZIP Code</label>
+              <input
+                name="zipCode"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.zipCode}
+                onChange={handleChange}
+                placeholder="10001"
+              />
+              {errors.zipCode && <p className={errorClass}>{errors.zipCode}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Country</label>
+              <input
+                name="country"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.country}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          {/* Account Info */}
+          <h3 className="text-lg font-semibold text-slate-700 border-b pb-2 mt-6">Account Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className={labelClass}>Company Name</label>
+              <input
+                name="company"
+                type="text"
+                required
+                className={inputClass}
+                value={formData.company}
+                onChange={handleChange}
+                placeholder="Acme Corp"
+              />
+              {errors.company && <p className={errorClass}>{errors.company}</p>}
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>Email Address</label>
+              <input
+                name="email"
+                type="email"
+                required
+                className={inputClass}
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="john@example.com"
+              />
+              {errors.email && <p className={errorClass}>{errors.email}</p>}
+            </div>
+
+            <div>
+              <label className={labelClass}>Password</label>
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className={`${inputClass} pr-10`}
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {errors.password && <p className={errorClass}>{errors.password}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Confirm Password</label>
+              <div className="relative">
+                <input
+                  name="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className={`${inputClass} pr-10`}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                />
+              </div>
+              {errors.confirmPassword && <p className={errorClass}>{errors.confirmPassword}</p>}
+            </div>
+
+            <div className="md:col-span-2">
+              <label className={labelClass}>Account Type</label>
+              <select
+                name="role"
+                className={`${inputClass} appearance-none`}
+                value={formData.role}
+                onChange={handleChange}
+              >
+                <option value="importer">Importer</option>
+                <option value="exporter">Exporter</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3 rounded-3xl bg-sky-400 hover:bg-sky-500 text-white font-medium shadow-md transition-all active:scale-[0.98] mt-8 text-lg"
+          >
+            {isSubmitting ? "Creating Account..." : "Create Account"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-slate-500">
+          Already have an account?{' '}
+          <Link to="/login" className="text-sky-500 hover:text-sky-600 transition-colors font-medium">
+            Sign In
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 };
 
