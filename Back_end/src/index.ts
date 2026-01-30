@@ -1,7 +1,22 @@
-/** @format */
+import dotenv from "dotenv";
+import path from "path";
+
+// Load env vars before anything else
+const envPath = path.resolve(__dirname, "../.env");
+console.log("Loading .env from:", envPath);
+console.log("PORT before dotenv:", process.env.PORT);
+const result = dotenv.config({ path: envPath });
+
+if (result.error) {
+  console.log("Error loading .env file:", result.error);
+  // Fallback
+  dotenv.config();
+}
+
+// Log env state immediately
+console.log("PORT immediately after load:", process.env.PORT);
 
 import express from "express";
-import dotenv from "dotenv";
 import sequelize from "./config/db";
 import userRoutes from "./routes/userRouts";
 import productRoutes from "./routes/productRoutes";
@@ -12,7 +27,7 @@ import cors from "cors";
 // Import models with associations
 import "./models/index";
 
-dotenv.config();
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -78,14 +93,30 @@ app.use("/api/complaint", complaintRoutes);
 app.use("/shared/uploads", express.static("shared/uploads"));
 
 // Database connection and server start
+// Database connection and server start
 sequelize
   .sync({ force: false }) // Changed back to false after creating tables with foreign keys
   .then(() => {
     console.log("MySQL connected!");
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`Database Host: ${process.env.DB_HOST}`);
+    });
+
+    server.on('error', (error) => {
+      console.error("Server failed to start:", error);
     });
   })
   .catch((error) => {
     console.error("Failed to connect to database:", error);
   });
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});

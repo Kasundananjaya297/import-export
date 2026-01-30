@@ -1,7 +1,7 @@
 /** @format */
 
 // API Configuration
-export const API_BASE_URL = "http://localhost:3000/api";
+export const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000") + "/api";
 
 // API Endpoints
 export const API_ENDPOINTS = {
