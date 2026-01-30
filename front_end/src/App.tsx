@@ -14,6 +14,7 @@ import Layout from "./components/layout/Layout";
 // Auth Pages
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import Home from "./pages/Home";
 
 // Importer Pages
 import ImporterDashboard from "./pages/importer/Dashboard";
@@ -49,6 +50,10 @@ function App() {
 
               {/* Layout Wrapper */}
               <Route element={<Layout />}>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/listing/:id" element={<div>Listing Details (To Be Implemented)</div>} />
+
                 {/* Shared Routes */}
                 <Route
                   path="/complaints"
@@ -175,8 +180,7 @@ function App() {
               </Route>
 
               {/* Default redirect */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

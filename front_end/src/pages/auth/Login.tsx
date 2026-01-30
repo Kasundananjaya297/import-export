@@ -17,20 +17,9 @@ const Login = () => {
     try {
       const response = await login(email, password);
       if (response && response.data && response.data.data) {
-        const { role } = response.data.data;
-        switch (role) {
-          case 'admin':
-            navigate('/admin/dashboard');
-            break;
-          case 'importer':
-            navigate('/importer/dashboard');
-            break;
-          case 'exporter':
-            navigate('/exporter/dashboard');
-            break;
-          default:
-            navigate('/');
-        }
+        // const { role } = response.data.data;
+        // Navigate to home page for all roles as requested
+        navigate('/');
       } else {
         navigate('/');
       }
