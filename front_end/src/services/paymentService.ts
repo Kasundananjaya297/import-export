@@ -1,7 +1,7 @@
 /** @format */
 
 import axios from "axios";
-import { API_BASE_URL, API_ENDPOINTS } from "../config";
+import { API_BASE_URL, API_ENDPOINTS } from "../config/index";
 
 export interface Payment {
   id: number;

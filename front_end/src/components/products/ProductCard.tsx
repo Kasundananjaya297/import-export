@@ -21,10 +21,13 @@ import {
   Inventory as InventoryIcon,
   Warning as WarningIcon,
   Cancel as CancelIcon,
+  Store as StoreIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 import { Product } from "../../services/productService";
 import StatusBadge from "../common/StatusBadge";
+import { useAuth } from "../../context/AuthContext";
 
 interface ProductCardProps {
   product: Product;
@@ -38,9 +41,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showAddToCart = true,
 }) => {
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
+  const { isAuthenticated } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const autoPlayRef = useRef<any>(null);
 
   // Auto-play carousel
   useEffect(() => {
@@ -102,6 +107,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const stockStatus = getStockStatus();
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      enqueueSnackbar("Please register to place an order", { variant: "info" });
+      navigate("/register");
+      return;
+    }
+
     if (onAddToCart) {
       onAddToCart(product);
     } else {
@@ -110,7 +121,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const handleViewDetails = () => {
-    navigate(`/importer/place-order/${product.id}`);
+    if (!isAuthenticated) {
+      enqueueSnackbar("Please register to view details", { variant: "info" });
+      navigate("/register");
+      return;
+    }
+    navigate(`/listing/${product.id}`);
   };
 
   return (
@@ -280,56 +296,94 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </Box>
 
       <CardContent
-        sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
+        sx={{ p: 1.5, "&:last-child": { pb: 1.5 }, flexGrow: 1, display: "flex", flexDirection: "column" }}
       >
-        <Typography
-          variant="h6"
-          component="h2"
-          gutterBottom
-          sx={{ fontWeight: 600 }}
-        >
-          {product.name}
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 0.5 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              noWrap
+              sx={{ fontWeight: 700, lineHeight: 1.2, mb: 0.5, overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {product.species || product.name}
+            </Typography>
+            <Typography variant="caption" color="cyan.700" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+              {product.variety || product.category}
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+            <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 800, lineHeight: 1 }}>
+              Rs.{parseFloat(product.price).toFixed(0)}
+            </Typography>
+          </Box>
+        </Box>
 
         <Typography
-          variant="body2"
+          variant="caption"
           color="text.secondary"
-          sx={{ mb: 2, flexGrow: 1 }}
+          sx={{
+            mb: 1,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            minHeight: '2.4em',
+            lineHeight: 1.2
+          }}
         >
           {product.description}
         </Typography>
 
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h5" color="primary" sx={{ fontWeight: "bold" }}>
-            ${parseFloat(product.price).toFixed(2)}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            per {product.unit}
-          </Typography>
-        </Box>
+        {/* Fish Metadata Grid */}
+        <Grid container spacing={0.5} sx={{ mb: 1 }}>
+          <Grid item xs={6}>
+            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+              <Box component="span" sx={{ fontWeight: 700, color: 'primary.main', mr: 0.5 }}>Qty:</Box>
+              {product.quantity} {product.unit}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+              <Box component="span" sx={{ fontWeight: 700, color: 'primary.main', mr: 0.5 }}>Size:</Box>
+              {product.sizeValue}{product.sizeUnit}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+              <Box component="span" sx={{ fontWeight: 700, color: 'primary.main', mr: 0.5 }}>Age:</Box>
+              {product.ageValue} {product.ageUnit}
+            </Typography>
+          </Grid>
+          {isAuthenticated && (
+            <Grid item xs={6}>
+              <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                <Box component="span" sx={{ fontWeight: 700, color: 'primary.main', mr: 0.5 }}>Sex:</Box>
+                {product.gender}
+              </Typography>
+            </Grid>
+          )}
+        </Grid>
 
-        {/* Stock Information */}
-        <Box sx={{ mb: 2 }}>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ display: "flex", alignItems: "center", mb: 1 }}
-          >
-            <InventoryIcon sx={{ mr: 1, fontSize: "1rem" }} />
-            Available: {product.quantity} {product.unit}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Min Order: {product.minOrderQuantity} {product.unit}
-          </Typography>
-        </Box>
-
-        <Box sx={{ mb: 2 }}>
-          <Chip label={product.category} size="small" sx={{ mr: 1 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Chip
             label={`Origin: ${product.origin}`}
             size="small"
             variant="outlined"
+            sx={{ height: 20, fontSize: '0.65rem' }}
           />
+          {product.stall && (
+            <Chip
+              icon={<StoreIcon sx={{ fontSize: '0.8rem !important' }} />}
+              label={product.stall.stallName}
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/stall/${product.stall?.id}`);
+              }}
+              sx={{ height: 20, fontSize: '0.65rem', cursor: 'pointer' }}
+            />
+          )}
         </Box>
 
         <Box sx={{ mt: "auto" }}>

@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -16,33 +16,66 @@ import {
 } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 import { productService, Product } from "../../services/productService";
 import ProductManagementCard from "../../components/products/ProductManagementCard";
+import { useAuth } from "../../context/AuthContext";
 
 const ProductManagement: React.FC = () => {
+  const { currentUser, hasStall } = useAuth();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await productService.getProductByUserId();
+      setProducts(data);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      enqueueSnackbar("Failed to load products", { variant: "error" });
+    } finally {
+      setLoading(false);
+    }
+  }, [enqueueSnackbar]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const data = await productService.getProductByUserId();
-        setProducts(data);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-        setError("Failed to load products. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
+
+  const handleStatusChange = async (product: Product, newStatus: string) => {
+    try {
+      await productService.updateProduct(product.id.toString(), { status: newStatus });
+      setProducts((current) =>
+        current.map((p) => (p.id === product.id ? { ...p, status: newStatus } : p))
+      );
+      enqueueSnackbar(
+        `Product marked as ${newStatus === "available" ? "available" : "sold out"}`,
+        { variant: "success" }
+      );
+    } catch (err) {
+      console.error("Error updating product status:", err);
+      enqueueSnackbar("Failed to update product status", { variant: "error" });
+    }
+  };
+
+  const handleDelete = async (productId: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await productService.deleteProduct(productId.toString());
+        enqueueSnackbar("Product deleted successfully", { variant: "success" });
+        setProducts((current) => current.filter((p) => p.id !== productId));
+      } catch (err) {
+        console.error("Error deleting product:", err);
+        enqueueSnackbar("Failed to delete product", { variant: "error" });
+      }
+    }
+  };
 
   // Filter products based on search and filters
   const filteredProducts = products.filter((product) => {
@@ -61,7 +94,7 @@ const ProductManagement: React.FC = () => {
     setCategoryFilter(event.target.value);
   };
 
-  const handleStatusChange = (event: SelectChangeEvent) => {
+  const handleStatusFilterChange = (event: SelectChangeEvent) => {
     setStatusFilter(event.target.value);
   };
 
@@ -75,16 +108,26 @@ const ProductManagement: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h4" component="h1">
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
           Product Management
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate("/exporter/add-product")}
-        >
-          Add New Product
-        </Button>
+        {(currentUser?.role === "seller" || currentUser?.role === "exporter") && !hasStall ? (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/create-stall")}
+          >
+            Create Stall
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate("/exporter/add-product")}
+          >
+            Add New Product
+          </Button>
+        )}
       </Box>
 
       {/* Search and Filter Section */}
@@ -127,11 +170,11 @@ const ProductManagement: React.FC = () => {
               <Select
                 value={statusFilter}
                 label="Status"
-                onChange={handleStatusChange}
+                onChange={handleStatusFilterChange}
               >
                 <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="available">Available</MenuItem>
+                <MenuItem value="out_of_stock">Sold Out</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -155,13 +198,10 @@ const ProductManagement: React.FC = () => {
             <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
               <ProductManagementCard
                 product={product}
-                onEdit={(product) => console.log("Edit product:", product.id)}
-                onDelete={(product) =>
-                  console.log("Delete product:", product.id)
-                }
-                onViewDetails={(product) =>
-                  console.log("View details:", product.id)
-                }
+                onEdit={(product) => navigate(`/exporter/edit-product/${product.id}`)}
+                onDelete={(product) => handleDelete(product.id)}
+                onViewDetails={(product) => navigate(`/listing/${product.id}`)}
+                onStatusChange={handleStatusChange}
               />
             </Grid>
           ))}

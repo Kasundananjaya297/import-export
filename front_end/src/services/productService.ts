@@ -1,7 +1,7 @@
 /** @format */
 
 import axios from "axios";
-import { API_BASE_URL, API_ENDPOINTS } from "../config";
+import { API_BASE_URL, API_ENDPOINTS } from "../config/index";
 
 export interface Product {
   id: number;
@@ -16,7 +16,36 @@ export interface Product {
   specifications: string;
   origin: string;
   certification: string;
-  userId: number; // API uses userId instead of sellerId
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+  // New fields for Fish Listing
+  species?: string;
+  variety?: string;
+  wholesalePrice?: string;
+  sizeValue?: number;
+  sizeUnit?: string;
+  ageValue?: number;
+  ageUnit?: string;
+  gender?: string;
+  breedingStatus?: string;
+  feedingFoodType?: string;
+  feedingFrequency?: string;
+  video?: string;
+  stallId?: number;
+  stall?: {
+    id: number;
+    stallName: string;
+    logo?: string;
+  };
+}
+
+export interface Stall {
+  id: number;
+  userId: number;
+  stallName: string;
+  description?: string;
+  logo?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -34,13 +63,15 @@ export interface AddProductData {
   specifications?: string;
   origin?: string;
   certification?: string;
+  status?: string;
   // New fields
   species?: string;
   variety?: string;
   wholesalePrice?: string;
   sizeValue?: string;
   sizeUnit?: string;
-  age?: string;
+  ageValue?: string;
+  ageUnit?: string;
   gender?: string;
   breedingStatus?: string;
   feedingFoodType?: string;
@@ -66,12 +97,14 @@ export interface AddProductWithCloudinaryData {
   wholesalePrice?: string;
   sizeValue?: string;
   sizeUnit?: string;
-  age?: string;
+  ageValue?: string;
+  ageUnit?: string;
   gender?: string;
   breedingStatus?: string;
   feedingFoodType?: string;
   feedingFrequency?: string;
   video?: string;
+  status?: string;
 }
 
 // API Request Parameters
@@ -86,6 +119,7 @@ export interface AddProductRequest {
   specifications?: string;
   origin?: string;
   certification?: string;
+  status?: string;
   images: File[];
   // New fields
   species?: string;
@@ -93,7 +127,8 @@ export interface AddProductRequest {
   wholesalePrice?: number;
   sizeValue?: number;
   sizeUnit?: string;
-  age?: string;
+  ageValue?: number;
+  ageUnit?: string;
   gender?: string;
   breedingStatus?: string;
   feedingFoodType?: string;
@@ -119,12 +154,14 @@ export interface AddProductWithCloudinaryRequest {
   wholesalePrice?: number;
   sizeValue?: number;
   sizeUnit?: string;
-  age?: string;
+  ageValue?: number;
+  ageUnit?: string;
   gender?: string;
   breedingStatus?: string;
   feedingFoodType?: string;
   feedingFrequency?: string;
   video?: string;
+  status?: string;
 }
 
 // [ADDED FOR REQUIREMENT COMPLETION]: removed UpdateProductQuantityRequest interface
@@ -174,7 +211,7 @@ class ProductService {
     const requestData: AddProductRequest = {
       name: productData.name,
       category: productData.category,
-      description: productData.description,
+      description: productData.description || "",
       price: parseFloat(productData.price),
       quantity: parseInt(productData.quantity),
       unit: productData.unit,
@@ -225,7 +262,7 @@ class ProductService {
     const requestData: AddProductWithCloudinaryRequest = {
       name: productData.name,
       category: productData.category,
-      description: productData.description,
+      description: productData.description || "",
       price: parseFloat(productData.price),
       quantity: parseInt(productData.quantity),
       unit: productData.unit,
@@ -293,37 +330,26 @@ class ProductService {
 
   async updateProduct(
     id: string,
-    productData: Partial<AddProductData>,
+    productData: Partial<AddProductWithCloudinaryData>,
   ): Promise<Product> {
-    const formData = new FormData();
-
-    // Append all text fields
-    Object.entries(productData).forEach(([key, value]) => {
-      if (key !== "images" && value !== undefined) {
-        if (typeof value === "string") {
-          formData.append(key, value);
-        }
-      }
-    });
-
-    // Append new images if any
-    if (productData.images) {
-      productData.images.forEach((image) => {
-        formData.append("images", image);
-      });
-    }
-
-    const response = await api.put(API_ENDPOINTS.PRODUCT.UPDATE(id), formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
+    const response = await api.put(
+      API_ENDPOINTS.PRODUCT.UPDATE(id),
+      productData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
-    return response.data.data; // Access the data object from the response
+    return response.data.data;
   }
 
   async deleteProduct(id: string): Promise<void> {
-    await api.delete(API_ENDPOINTS.PRODUCT.DELETE(id));
+    const response = await api.delete(API_ENDPOINTS.PRODUCT.DELETE(id));
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to delete product");
+    }
   }
 
   async getSellerProducts(sellerId: string): Promise<Product[]> {
@@ -357,6 +383,16 @@ class ProductService {
       console.error("Error getting product stock level:", error);
       return 0;
     }
+  }
+
+  async getStallById(id: string): Promise<Stall> {
+    const response = await api.get(API_ENDPOINTS.STALL.GET_PUBLIC(id));
+    return response.data.data;
+  }
+
+  async getProductsByStallId(stallId: string): Promise<Product[]> {
+    const response = await api.get(API_ENDPOINTS.PRODUCT.GET_PUBLIC_BY_STALL(stallId));
+    return response.data.data;
   }
 }
 

@@ -1,7 +1,7 @@
 /** @format */
 
 import axios from "axios";
-import { API_BASE_URL, API_ENDPOINTS } from "../config";
+import { API_BASE_URL, API_ENDPOINTS } from "../config/index";
 
 export interface RegisterData {
   fname: string;
@@ -15,9 +15,9 @@ export interface RegisterData {
   country: string;
   email: string;
   contact: string;
-  company: string;
+  company?: string;
   password: string;
-  role: string;
+  role?: string;
 }
 
 // Create axios instance with default config

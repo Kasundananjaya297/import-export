@@ -14,6 +14,7 @@ router.post(
 );
 router.get("/all", productController.getAllProducts as RequestHandler);
 router.get("/:id", productController.getProductById as RequestHandler);
+router.get("/public/stall/:stallId", productController.getProductsByStallId as RequestHandler);
 router.get(
   "",
   verifyToken as RequestHandler,

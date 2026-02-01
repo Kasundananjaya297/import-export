@@ -46,4 +46,5 @@ export interface IProduct {
   feedingFrequency?: string;
   video?: string;
   status?: "available" | "sold" | "out_of_stock";
+  stallId?: number;
 }

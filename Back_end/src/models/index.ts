@@ -5,6 +5,7 @@ import Product from "./products";
 import Order from "./orders";
 import Payment from "./payments";
 import Complaint from "./complaints";
+import Stall from "./stall";
 
 // Define associations
 User.hasMany(Product, {
@@ -15,6 +16,27 @@ User.hasMany(Product, {
 Product.belongsTo(User, {
   foreignKey: "userid",
   as: "user",
+});
+
+// Stall associations
+User.hasOne(Stall, {
+  foreignKey: "userId",
+  as: "stall",
+});
+
+Stall.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
+
+Stall.hasMany(Product, {
+  foreignKey: "stallId",
+  as: "products",
+});
+
+Product.belongsTo(Stall, {
+  foreignKey: "stallId",
+  as: "stall",
 });
 
 // Order associations
@@ -90,4 +112,4 @@ Complaint.belongsTo(Order, {
   as: "order",
 });
 
-export { User, Product, Order, Payment, Complaint };
+export { User, Product, Order, Payment, Complaint, Stall };

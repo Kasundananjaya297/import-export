@@ -35,7 +35,7 @@ export const loginUser = async (
   let response;
   try {
     if (userData) {
-      
+
       const user = await userService.loginUser(userData);
       //jwt token generation can be added here
       response = responseDTO("success", user, "User logged in successfully");
@@ -47,5 +47,29 @@ export const loginUser = async (
   } catch (error) {
     response = responseDTO("error", null, "Error logging in user");
     res.status(500).json(response);
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const userData = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const updatedUser = await userService.updateUserProfile(userId, userData);
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: "Profile updated successfully",
+    });
+  } catch (error: any) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error updating profile",
+    });
   }
 };

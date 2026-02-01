@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSnackbar } from 'notistack';
 import { Menu, X, User, LogOut, ShoppingBag, Store } from 'lucide-react';
 import LogoFish from '../../assets/LogoFish.png';
 
 const Navbar = () => {
     // Adapt AuthContext to match provided code expectations where possible
-    const { currentUser, logout } = useAuth();
+    const { currentUser, logout, switchRole } = useAuth();
     const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar();
     const [isOpen, setIsOpen] = useState(false);
 
     // Alias currentUser to user for easier adaptation
@@ -16,7 +18,7 @@ const Navbar = () => {
         name: currentUser.fname || 'User',
         // Map existing roles to logic if needed, or just use role directly
         // currentMode is not in AuthContext, defaulting to role for display if needed
-        currentMode: currentUser.role === 'exporter' ? 'seller' : 'buyer'
+        currentMode: (currentUser.role === 'exporter' || currentUser.role === 'seller') ? 'seller' : 'buyer'
     } : null;
 
     const handleLogout = () => {
@@ -28,14 +30,17 @@ const Navbar = () => {
     const getDashboardLink = () => {
         if (!user) return '/login';
         if (user.role === 'admin') return '/admin/dashboard';
-        if (user.role === 'exporter') return '/exporter/dashboard';
-        return '/importer/dashboard'; // Default (buyer/importer)
+        if (user.role === 'exporter' || user.role === 'seller') return '/exporter/dashboard';
+        return '/importer/dashboard'; // Default (buyer/importer/seller-as-buyer)
     };
 
     // switchMode is not available in current AuthContext. 
     // functionality is disabled/hidden for now.
     const switchMode = () => {
-        console.log("Switch mode not implemented in current AuthContext");
+        const newRole = user?.currentMode === 'buyer' ? 'seller' : 'buyer';
+        switchRole(newRole);
+        enqueueSnackbar(`Switched to ${newRole} mode`, { variant: 'info' });
+        navigate(newRole === 'seller' ? '/exporter/dashboard' : '/importer/dashboard');
     };
 
     const toggleMenu = () => setIsOpen(!isOpen);
@@ -83,17 +88,15 @@ const Navbar = () => {
                                 <Link to="/admin/dashboard" className="text-sm font-medium hover:text-cyan-400 transition-colors">Admin</Link>
                             )}
 
-                            {/* switchMode button hidden as functionality doesn't exist in backend/context yet
                             {user.role !== 'admin' && (
                                 <button
                                     onClick={switchMode}
                                     className="flex items-center gap-2 text-sm font-medium glass-card px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors"
                                 >
                                     {user.currentMode === 'buyer' ? <ShoppingBag size={16} /> : <Store size={16} />}
-                                    <span className="capitalize">{user.currentMode} Mode</span>
+                                    <span className="capitalize">{user.currentMode === 'buyer' ? 'Switch to Seller' : 'Switch to Buyer'}</span>
                                 </button>
                             )}
-                            */}
 
                             <div className="flex items-center gap-3">
                                 <Link to={getDashboardLink()} className="flex items-center gap-2 p-2 hover:bg-white/10 rounded-full transition-colors text-slate-300 hover:text-cyan-400">
@@ -119,17 +122,15 @@ const Navbar = () => {
 
                 {/* Mobile Menu Button & Mode */}
                 <div className="flex items-center gap-3 md:hidden">
-                    {/* Mode switch hidden on mobile too
                     {user && user.role !== 'admin' && (
                         <button
                             onClick={switchMode}
                             className="flex items-center gap-1 text-xs font-bold glass-card px-2 py-1.5 rounded-full"
                         >
                             {user.currentMode === 'buyer' ? <ShoppingBag size={14} className="text-cyan-400" /> : <Store size={14} className="text-purple-400" />}
-                            <span className="capitalize">{user.currentMode}</span>
+                            <span className="capitalize">{user.currentMode === 'buyer' ? 'Seller' : 'Buyer'}</span>
                         </button>
                     )}
-                    */}
                     <button onClick={toggleMenu} className="z-[60] relative text-slate-800 p-1">
                         {isOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>

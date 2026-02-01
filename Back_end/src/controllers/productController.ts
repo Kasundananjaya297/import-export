@@ -2,6 +2,7 @@
 
 import { Request, Response } from "express";
 import * as productRepo from "../repos/productRepo";
+import { Stall } from "../models";
 
 export const productController = {
   async create(req: Request, res: Response) {
@@ -59,6 +60,22 @@ export const productController = {
       // Get userId from authenticated user if available
       const authenticatedUserId = (req as any).user?.id || parseInt(userId);
 
+      if (!authenticatedUserId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      // Find user's stall
+      const stall = await Stall.findOne({ where: { userId: authenticatedUserId } });
+      if (!stall) {
+        return res.status(400).json({
+          success: false,
+          message: "User must have a stall before adding products.",
+        });
+      }
+
       const product = await productRepo.createProduct({
         name,
         category,
@@ -86,6 +103,7 @@ export const productController = {
         feedingFrequency,
         video,
         status: 'available',
+        stallId: stall.id,
       });
 
       res.status(201).json({
@@ -148,7 +166,7 @@ export const productController = {
       const { id } = req.params;
       const userId = (req as any).user.id;
 
-      const product = await productRepo.getProductById(Number(id));
+      const product = await productRepo.findOneProduct({ id: Number(id), userid: userId });
 
       if (!product) {
         return res.status(404).json({
@@ -208,7 +226,7 @@ export const productController = {
       const { id } = req.params;
       const userId = (req as any).user.id;
 
-      const product = await productRepo.findOneProduct({ id, userId });
+      const product = await productRepo.findOneProduct({ id: Number(id), userid: userId });
 
       if (!product) {
         return res.status(404).json({
@@ -228,6 +246,30 @@ export const productController = {
       res.status(500).json({
         success: false,
         message: "Error deleting product",
+      });
+    }
+  },
+
+  async getProductsByStallId(req: Request, res: Response) {
+    try {
+      const { stallId } = req.params;
+      if (!stallId) {
+        return res.status(400).json({
+          success: false,
+          message: "Stall ID is required",
+        });
+      }
+
+      const products = await productRepo.getProductByStallId(Number(stallId));
+      res.json({
+        success: true,
+        data: products,
+      });
+    } catch (error) {
+      console.error("Error fetching products by stall ID:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error fetching products by stall ID",
       });
     }
   },

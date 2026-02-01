@@ -25,6 +25,9 @@ export const createUser = async (user: IUser) => {
     if (existingUser) {
       throw new Error("User already exists");
     }
+    if (!user.role) {
+      user.role = "buyer";
+    }
     const newUser = await userRepo.createUser(user);
     return newUser;
   } catch (error) {
@@ -61,7 +64,23 @@ export const loginUser = async (user: IUser) => {
       contact: existingUser.getDataValue("contact"),
       jwt: jsonwebtoken,
       role: existingUser.getDataValue("role"),
+      stall: existingUser.get("stall"),
     };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (id: number, userData: Partial<IUser>) => {
+  try {
+    // Prevent sensitive fields from being updated here if needed
+    delete userData.password;
+    delete userData.role;
+    delete userData.email; // Usually don't allow email change for simplicity unless verified
+
+    await userRepo.updateUser(id, userData as any);
+    const updatedUser = await userRepo.getUserById(id);
+    return updatedUser;
   } catch (error) {
     throw error;
   }

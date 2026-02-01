@@ -47,7 +47,7 @@ export const orderController = {
       const sellerId = product.getDataValue("userid");
       console.log("Product found:", product.getDataValue("id"));
       console.log("Seller ID extracted:", sellerId);
-      
+
       if (!sellerId) {
         return res.status(400).json({
           success: false,
@@ -58,7 +58,7 @@ export const orderController = {
       // Check if product has enough quantity
       const currentQuantity = product.getDataValue("quantity");
       const orderQuantity = parseInt(quantity);
-      
+
       if (currentQuantity < orderQuantity) {
         return res.status(400).json({
           success: false,
@@ -360,9 +360,9 @@ export const orderController = {
       const userRole = (req as any).user.role;
 
       let orders;
-      if (userRole === "importer") {
+      if (userRole === "importer" || userRole === "buyer") {
         orders = await orderRepo.getOrdersByBuyerId(userId);
-      } else if (userRole === "exporter") {
+      } else if (userRole === "exporter" || userRole === "seller") {
         orders = await orderRepo.getOrdersBySellerId(userId);
       } else {
         orders = await orderRepo.getAllOrders();
@@ -425,9 +425,9 @@ export const orderController = {
       const userRole = (req as any).user.role;
 
       let orders;
-      if (userRole === "importer") {
+      if (userRole === "importer" || userRole === "buyer") {
         orders = await orderRepo.getOrdersByBuyerId(userId);
-      } else if (userRole === "exporter") {
+      } else if (userRole === "exporter" || userRole === "seller") {
         orders = await orderRepo.getOrdersBySellerId(userId);
       } else {
         orders = await orderRepo.getAllOrders();

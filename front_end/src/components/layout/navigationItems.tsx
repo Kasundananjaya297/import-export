@@ -2,15 +2,15 @@ import React from 'react';
 import {
   Dashboard as DashboardIcon,
   Inventory as InventoryIcon,
-  ShoppingCart as ShoppingCartIcon,
   ListAlt as ListAltIcon,
-  Payment as PaymentIcon,
   Support as SupportIcon,
   LocalShipping as LocalShippingIcon,
   Receipt as ReceiptIcon,
   PeopleAlt as PeopleAltIcon,
   BarChart as BarChartIcon,
-  Article as ArticleIcon
+  Article as ArticleIcon,
+  Store as StoreIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 
 interface NavItem {
@@ -22,6 +22,7 @@ interface NavItem {
 export const getNavItems = (role: string): NavItem[] => {
   switch (role) {
     case 'importer':
+    case 'buyer':
       return [
         {
           label: 'Dashboard',
@@ -42,9 +43,15 @@ export const getNavItems = (role: string): NavItem[] => {
           label: 'Submit Complaint',
           path: '/importer/complaint',
           icon: <SupportIcon />
+        },
+        {
+          label: 'My Profile',
+          path: '/profile',
+          icon: <PersonIcon />
         }
       ];
     case 'exporter':
+    case 'seller':
       return [
         {
           label: 'Dashboard',
@@ -70,6 +77,16 @@ export const getNavItems = (role: string): NavItem[] => {
           label: 'Complaints',
           path: '/exporter/complaints',
           icon: <SupportIcon />
+        },
+        {
+          label: 'Stall Management',
+          path: '/exporter/stall-management',
+          icon: <StoreIcon />
+        },
+        {
+          label: 'My Profile',
+          path: '/profile',
+          icon: <PersonIcon />
         }
       ];
     case 'admin':
@@ -98,6 +115,11 @@ export const getNavItems = (role: string): NavItem[] => {
           label: 'System Logs',
           path: '/admin/logs',
           icon: <ArticleIcon />
+        },
+        {
+          label: 'My Profile',
+          path: '/profile',
+          icon: <PersonIcon />
         }
       ];
     default:

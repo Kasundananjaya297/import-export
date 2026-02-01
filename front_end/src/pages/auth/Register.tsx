@@ -24,7 +24,7 @@ const Register: React.FC = () => {
     password: "",
     confirmPassword: "",
     company: "",
-    role: "importer",
+    role: "buyer",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -64,8 +64,9 @@ const Register: React.FC = () => {
       newErrors.password = "Password must be at least 6 characters";
     if (formData.password !== formData.confirmPassword)
       newErrors.confirmPassword = "Passwords do not match";
-    if (!formData.company.trim())
-      newErrors.company = "Company name is required";
+    // Role and Company are now optional
+    // if (!formData.company.trim())
+    //   newErrors.company = "Company name is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -278,7 +279,6 @@ const Register: React.FC = () => {
               <input
                 name="company"
                 type="text"
-                required
                 className={inputClass}
                 value={formData.company}
                 onChange={handleChange}
@@ -346,6 +346,7 @@ const Register: React.FC = () => {
                 value={formData.role}
                 onChange={handleChange}
               >
+                <option value="buyer">Buyer</option>
                 <option value="importer">Importer</option>
                 <option value="exporter">Exporter</option>
               </select>

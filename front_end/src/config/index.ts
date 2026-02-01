@@ -1,7 +1,8 @@
 /** @format */
 
+// API Configuration
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8000";
+  (import.meta.env.VITE_API_URL || "http://localhost:8000") + "/api";
 
 console.log("Frontend Config Loaded:", {
   VITE_API_URL: import.meta.env.VITE_API_URL,
@@ -9,40 +10,68 @@ console.log("Frontend Config Loaded:", {
 });
 
 export const API_ENDPOINTS = {
+  STALL: {
+    CREATE: "/stall/create",
+    GET_BY_USER: "/stall/me",
+    UPDATE: "/stall/update",
+    GET_PUBLIC: (id: string) => `/stall/public/${id}`,
+  },
   USER: {
-    CREATE: "/api/user/create",
-    LOGIN: "/api/user/login",
-    GET_CURRENT: "/api/user/me",
+    CREATE: "/user/create",
+    LOGIN: "/user/login",
+    GET_CURRENT: "/user/me",
+    UPDATE_PROFILE: "/user/update",
   },
   PRODUCT: {
-    CREATE: "/api/products/create",
-    GET_ALL: "/api/products/all",
-    GET_BY_ID: (id: string) => `/api/products/${id}`,
-    UPDATE: (id: string) => `/api/products/${id}`,
-    DELETE: (id: string) => `/api/products/${id}`,
+    CREATE: "/products/create",
+    GET_ALL: "/products/all",
+    GET_BY_ID: (id: string) => `/products/${id}`,
+    UPDATE: (id: string) => `/products/${id}`,
+    DELETE: (id: string) => `/products/${id}`,
     GET_SELLER_PRODUCTS: (sellerId: string) =>
-      `/api/products/seller/${sellerId}`,
+      `/products/seller/${sellerId}`,
+    GET_PUBLIC_BY_STALL: (stallId: string) =>
+      `/products/public/stall/${stallId}`,
+    GET_BY_USER_ID: "/products/me",
   },
   ORDER: {
-    CREATE: "/api/order/create",
-    GET_ALL: "/api/order/all",
-    GET_BY_ID: (id: number) => `/api/order/${id}`,
-    GET_BUYER_ORDERS: "/api/order/buyer/orders",
-    GET_SELLER_ORDERS: "/api/order/seller/orders",
-    UPDATE_STATUS: (id: number) => `/api/order/${id}/status`,
-    UPDATE_PAYMENT: (id: number) => `/api/order/${id}/payment`,
-    DELETE: (id: number) => `/api/order/${id}`,
-    CANCEL: (id: number) => `/api/order/${id}/cancel`,
-    SEARCH: "/api/order/search",
-    STATS: "/api/order/stats",
+    CREATE: "/order/create",
+    GET_ALL: "/order/all",
+    GET_BY_ID: (id: number) => `/order/${id}`,
+    GET_BUYER_ORDERS: "/order/buyer/orders",
+    GET_SELLER_ORDERS: "/order/seller/orders",
+    UPDATE_STATUS: (id: number) => `/order/${id}/status`,
+    UPDATE_PAYMENT: (id: number) => `/order/${id}/payment`,
+    DELETE: (id: number) => `/order/${id}`,
+    CANCEL: (id: number) => `/order/${id}/cancel`,
+    SEARCH: "/order/search",
+    STATS: "/order/stats",
   },
   PAYMENT: {
-    CREATE: "/api/payment/create",
-    PROCESS: (id: number) => `/api/payment/${id}/process`,
-    GET_ALL: "/api/payment/all",
-    GET_BY_ID: (id: number) => `/api/payment/${id}`,
-    GET_BY_ORDER_ID: (orderId: number) => `/api/payment/order/${orderId}`,
-    UPDATE_STATUS: (id: number) => `/api/payment/${id}/status`,
-    REFUND: (id: number) => `/api/payment/${id}/refund`,
+    CREATE: "/payment/create",
+    PROCESS: (id: number) => `/payment/${id}/process`,
+    GET_ALL: "/payment/all",
+    GET_BY_ID: (id: number) => `/payment/${id}`,
+    GET_BY_ORDER_ID: (orderId: number) => `/payment/order/${orderId}`,
+    UPDATE_STATUS: (id: number) => `/payment/${id}/status`,
+    REFUND: (id: number) => `/payment/${id}/refund`,
+  },
+  COMPLAINT: {
+    CREATE: "/complaint/create",
+    GET_ALL: "/complaint/all",
+    GET_BY_ID: (id: number) => `/complaint/${id}`,
+    GET_BUYER_COMPLAINTS: "/complaint/buyer/complaints",
+    GET_SELLER_COMPLAINTS: "/complaint/seller/complaints",
+    UPDATE_STATUS: (id: number) => `/complaint/${id}/status`,
+    DELETE: (id: number) => `/complaint/${id}`,
+  },
+  TRANSACTION: {
+    GET_ALL: "/transactions",
+    GET_BY_ID: (id: string) => `/transactions/${id}`,
+    GET_USER_TRANSACTIONS: (userId: string) => `/transactions/user/${userId}`,
   },
 };
+
+// App Configuration
+export const APP_NAME = "Ceylon Trade";
+export const APP_VERSION = "1.0.0";

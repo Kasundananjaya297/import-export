@@ -21,6 +21,8 @@ import { useSnackbar } from "notistack";
 import { productService, AddProductData } from "../../services/productService";
 import CloudinaryImageUpload from "../../components/common/CloudinaryImageUpload";
 import ImageGallery from "../../components/common/ImageGallery";
+import { useAuth } from "../../context/AuthContext";
+import { useEffect } from "react";
 
 const categories = [
   "Tea",
@@ -37,7 +39,17 @@ const units = ["Piece", "Pair"];
 const AddProduct: React.FC = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { currentUser, hasStall } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if ((currentUser?.role === "seller" || currentUser?.role === "exporter") && !hasStall) {
+      enqueueSnackbar("You must create a stall before adding products.", {
+        variant: "warning",
+      });
+      navigate("/create-stall");
+    }
+  }, [currentUser, hasStall, navigate, enqueueSnackbar]);
 
   const [formData, setFormData] = useState<AddProductData>({
     name: "",

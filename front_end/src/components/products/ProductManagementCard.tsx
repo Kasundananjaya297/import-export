@@ -27,7 +27,8 @@ import {
   Warning as WarningIcon,
   Cancel as CancelIcon,
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
+  Block as BlockIcon,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { Product } from "../../services/productService";
 
@@ -36,6 +37,7 @@ interface ProductManagementCardProps {
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onViewDetails?: (product: Product) => void;
+  onStatusChange?: (product: Product, newStatus: string) => void;
 }
 
 const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
@@ -43,11 +45,12 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
   onEdit,
   onDelete,
   onViewDetails,
+  onStatusChange,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const autoPlayRef = useRef<any>(null);
 
   // Auto-play carousel
   useEffect(() => {
@@ -105,11 +108,11 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
   };
 
   const getStockStatus = () => {
-    if (product.quantity === 0) {
+    if (product.status === "out_of_stock" || product.quantity === 0) {
       return {
         status: "out_of_stock",
         color: "error",
-        text: "Out of Stock",
+        text: "Sold Out",
         icon: <CancelIcon />,
       };
     } else if (product.quantity <= product.minOrderQuantity) {
@@ -182,6 +185,40 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
             },
           }}
         />
+
+        {/* Sold Out Overlay */}
+        {(product.status === "out_of_stock" || product.quantity === 0) && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              bgcolor: "rgba(0,0,0,0.6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2,
+            }}
+          >
+            <Typography
+              variant="h5"
+              sx={{
+                color: "white",
+                fontWeight: "bold",
+                border: "3px solid white",
+                px: 2,
+                py: 1,
+                transform: "rotate(-15deg)",
+                textTransform: "uppercase",
+                letterSpacing: 2,
+              }}
+            >
+              Sold Out
+            </Typography>
+          </Box>
+        )}
 
         {/* Navigation Arrows */}
         {product.images && product.images.length > 1 && (
@@ -387,10 +424,10 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
                   stockStatus.color === "error"
                     ? "error.main"
                     : stockStatus.color === "warning"
-                    ? "warning.main"
-                    : stockStatus.color === "info"
-                    ? "info.main"
-                    : "success.main",
+                      ? "warning.main"
+                      : stockStatus.color === "info"
+                        ? "info.main"
+                        : "success.main",
                 borderRadius: 1,
                 transition: "width 0.3s ease",
               }}
@@ -499,6 +536,25 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Delete Product</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            const newStatus = product.status === "available" ? "out_of_stock" : "available";
+            onStatusChange?.(product, newStatus);
+            handleMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {product.status === "available" ? (
+              <BlockIcon fontSize="small" color="error" />
+            ) : (
+              <CheckCircleIcon fontSize="small" color="success" />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {product.status === "available" ? "Mark as Sold Out" : "Mark as Available"}
+          </ListItemText>
         </MenuItem>
       </Menu>
     </Card>

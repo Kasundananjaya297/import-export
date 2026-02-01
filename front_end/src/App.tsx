@@ -1,6 +1,5 @@
 /** @format */
 
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -14,7 +13,10 @@ import Layout from "./components/layout/Layout";
 // Auth Pages
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import Profile from "./pages/auth/Profile";
 import Home from "./pages/Home";
+import ProductDetails from "./pages/ProductDetails";
+import StallDetails from "./pages/StallDetails";
 
 // Importer Pages
 import ImporterDashboard from "./pages/importer/Dashboard";
@@ -33,6 +35,9 @@ import ProductManagement from "./pages/exporter/ProductManagement";
 import OrderManagement from "./pages/exporter/OrderManagement";
 import TransactionHistory from "./pages/exporter/TransactionHistory";
 import Complaints from "./pages/exporter/Complaints";
+import CreateStall from "./pages/exporter/CreateStall";
+import StallManagement from "./pages/exporter/StallManagement";
+import EditProduct from "./pages/exporter/EditProduct";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -52,14 +57,23 @@ function App() {
               <Route element={<Layout />}>
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
-                <Route path="/listing/:id" element={<div>Listing Details (To Be Implemented)</div>} />
+                <Route path="/listing/:id" element={<ProductDetails />} />
+                <Route path="/stall/:id" element={<StallDetails />} />
 
                 {/* Shared Routes */}
                 <Route
                   path="/complaints"
                   element={
-                    <ProtectedRoute roles={["importer", "exporter", "admin"]}>
+                    <ProtectedRoute roles={["importer", "exporter", "admin", "buyer", "seller"]}>
                       <ComplaintsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute roles={["importer", "exporter", "admin", "buyer", "seller"]}>
+                      <Profile />
                     </ProtectedRoute>
                   }
                 />
@@ -78,7 +92,7 @@ function App() {
                 <Route
                   path="/importer/dashboard"
                   element={
-                    <ProtectedRoute roles={["importer", "admin"]}>
+                    <ProtectedRoute roles={["importer", "admin", "buyer"]}>
                       <ImporterDashboard />
                     </ProtectedRoute>
                   }
@@ -86,7 +100,7 @@ function App() {
                 <Route
                   path="/importer/catalog"
                   element={
-                    <ProtectedRoute roles={["importer", "admin"]}>
+                    <ProtectedRoute roles={["importer", "admin", "buyer"]}>
                       <ProductCatalog />
                     </ProtectedRoute>
                   }
@@ -94,7 +108,7 @@ function App() {
                 <Route
                   path="/importer/place-order/:productId?"
                   element={
-                    <ProtectedRoute roles={["importer", "admin"]}>
+                    <ProtectedRoute roles={["importer", "admin", "buyer"]}>
                       <PlaceOrder />
                     </ProtectedRoute>
                   }
@@ -102,7 +116,7 @@ function App() {
                 <Route
                   path="/importer/orders"
                   element={
-                    <ProtectedRoute roles={["importer", "admin"]}>
+                    <ProtectedRoute roles={["importer", "admin", "buyer"]}>
                       <MyOrders />
                     </ProtectedRoute>
                   }
@@ -110,7 +124,7 @@ function App() {
                 <Route
                   path="/importer/complaint"
                   element={
-                    <ProtectedRoute roles={["importer", "admin"]}>
+                    <ProtectedRoute roles={["importer", "admin", "buyer"]}>
                       <SubmitComplaint />
                     </ProtectedRoute>
                   }
@@ -118,7 +132,7 @@ function App() {
                 <Route
                   path="/importer/payment/:orderId"
                   element={
-                    <ProtectedRoute roles={["importer", "admin"]}>
+                    <ProtectedRoute roles={["importer", "admin", "buyer"]}>
                       <PaymentPage />
                     </ProtectedRoute>
                   }
@@ -132,7 +146,7 @@ function App() {
                 <Route
                   path="/exporter/dashboard"
                   element={
-                    <ProtectedRoute roles={["exporter", "admin"]}>
+                    <ProtectedRoute roles={["exporter", "admin", "seller"]}>
                       <ExporterDashboard />
                     </ProtectedRoute>
                   }
@@ -140,15 +154,31 @@ function App() {
                 <Route
                   path="/exporter/add-product"
                   element={
-                    <ProtectedRoute roles={["exporter"]}>
+                    <ProtectedRoute roles={["exporter", "seller"]}>
                       <AddProduct />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/exporter/edit-product/:id"
+                  element={
+                    <ProtectedRoute roles={["exporter", "seller"]}>
+                      <EditProduct />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create-stall"
+                  element={
+                    <ProtectedRoute roles={["exporter", "seller"]}>
+                      <CreateStall />
                     </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/exporter/products"
                   element={
-                    <ProtectedRoute roles={["exporter", "admin"]}>
+                    <ProtectedRoute roles={["exporter", "admin", "seller"]}>
                       <ProductManagement />
                     </ProtectedRoute>
                   }
@@ -156,7 +186,7 @@ function App() {
                 <Route
                   path="/exporter/orders"
                   element={
-                    <ProtectedRoute roles={["exporter", "admin"]}>
+                    <ProtectedRoute roles={["exporter", "admin", "seller"]}>
                       <OrderManagement />
                     </ProtectedRoute>
                   }
@@ -164,7 +194,7 @@ function App() {
                 <Route
                   path="/exporter/transactions"
                   element={
-                    <ProtectedRoute roles={["exporter", "admin"]}>
+                    <ProtectedRoute roles={["exporter", "admin", "seller"]}>
                       <TransactionHistory />
                     </ProtectedRoute>
                   }
@@ -172,8 +202,16 @@ function App() {
                 <Route
                   path="/exporter/complaints"
                   element={
-                    <ProtectedRoute roles={["exporter", "admin"]}>
+                    <ProtectedRoute roles={["exporter", "admin", "seller"]}>
                       <Complaints />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/exporter/stall-management"
+                  element={
+                    <ProtectedRoute roles={["exporter", "admin", "seller"]}>
+                      <StallManagement />
                     </ProtectedRoute>
                   }
                 />

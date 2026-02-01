@@ -44,11 +44,10 @@ import { complaintService } from "../../services/complaintService";
 const COLORS = ["#1976D2", "#90CAF9", "#42A5F5", "#64B5F6", "#2196F3"];
 
 const ExporterDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, hasStall } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
   const [complaints, setComplaints] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -79,7 +78,6 @@ const ExporterDashboard: React.FC = () => {
       ]);
 
       setOrders(ordersData);
-      setProducts(productsData);
       setComplaints(complaintsData);
 
       // Calculate stats
@@ -203,13 +201,23 @@ const ExporterDashboard: React.FC = () => {
             Manage your export products and orders
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate("/exporter/add-product")}
-        >
-          Add New Product
-        </Button>
+        {(currentUser?.role === "seller" || currentUser?.role === "exporter") && !hasStall ? (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/create-stall")}
+          >
+            Create Stall
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate("/exporter/add-product")}
+          >
+            Add New Product
+          </Button>
+        )}
       </Box>
 
       <Grid container spacing={3}>
@@ -308,7 +316,7 @@ const ExporterDashboard: React.FC = () => {
                     `${name}: ${(percent * 100).toFixed(0)}%`
                   }
                 >
-                  {productCategories.map((entry, index) => (
+                  {productCategories.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -361,10 +369,10 @@ const ExporterDashboard: React.FC = () => {
                       order.status === "cancelled"
                         ? "error"
                         : order.status === "delivered"
-                        ? "success"
-                        : order.status === "pending"
-                        ? "warning"
-                        : "info"
+                          ? "success"
+                          : order.status === "pending"
+                            ? "warning"
+                            : "info"
                     }
                     statusText={order.status}
                     icon={<LocalShippingIcon />}
@@ -422,8 +430,8 @@ const ExporterDashboard: React.FC = () => {
                       complaint.status === "resolved" || complaint.status === "closed"
                         ? "success"
                         : complaint.status === "in_progress"
-                        ? "info"
-                        : "warning"
+                          ? "info"
+                          : "warning"
                     }
                     statusText={complaint.status}
                     icon={<SupportAgentIcon />}

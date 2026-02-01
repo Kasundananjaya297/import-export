@@ -1,6 +1,7 @@
 /** @format */
 
 import User from "../models/users";
+import Stall from "../models/stall";
 import { IUser } from "../interfaces";
 
 export const createUser = async (user: IUser) => {
@@ -23,7 +24,10 @@ export const getUserById = async (id: number) => {
 };
 export const findUserByEmail = async (email: string) => {
   try {
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({
+      where: { email },
+      include: [{ model: Stall, as: "stall" }]
+    });
     console.log("User found by email:", user);
     return user;
   } catch (error) {

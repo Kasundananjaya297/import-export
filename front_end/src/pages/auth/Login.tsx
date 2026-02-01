@@ -17,11 +17,12 @@ const Login = () => {
     try {
       const response = await login(email, password);
       if (response && response.data && response.data.data) {
-        // const { role } = response.data.data;
-        // Navigate to home page for all roles as requested
-        navigate('/');
+        const user = response.data.data;
+        if (user.role === "admin") navigate("/admin/dashboard");
+        else if (user.role === "exporter" || user.role === "seller") navigate("/exporter/dashboard");
+        else navigate("/importer/dashboard"); // Handles importer and buyer
       } else {
-        navigate('/');
+        navigate("/");
       }
     } catch (err: any) {
       setError(err.message || 'Login failed');

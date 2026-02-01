@@ -121,6 +121,16 @@ Product.init(
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
     },
+    stallId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // Allow null temporarily to avoid breaking existing data, but will be enforced in controller
+      references: {
+        model: "Stall",
+        key: "id",
+      },
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
+    },
   },
   {
     sequelize,

@@ -16,4 +16,5 @@ export interface User {
   company: string;
   role: string;
   token?: string;
+  stall?: any;
 }

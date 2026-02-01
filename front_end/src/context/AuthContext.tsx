@@ -17,6 +17,10 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<any>;
   logout: () => void;
   register: (userData: RegisterData) => Promise<AxiosResponse>;
+  switchRole: (newRole: string) => void;
+  updateUser: (userData: Partial<User>) => void;
+  hasStall: boolean;
+  setHasStall: (status: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,14 +32,15 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [hasStall, setHasStall] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check for saved user data in localStorage
     const savedUser = localStorage.getItem("currentUser");
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setCurrentUser(parsedUser);
       setIsAuthenticated(true);
+      setHasStall(!!parsedUser.stall);
     }
   }, []);
 
@@ -46,12 +51,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Store the user data and token
         const userData = {
           ...response.data.data,
-          token: response.data.data.jwt, // JWT is inside response.data.data
+          token: response.data.data.jwt,
           role: response.data.data.role,
         };
         console.log("Login successful, storing user data:", userData);
         setCurrentUser(userData);
         setIsAuthenticated(true);
+        setHasStall(!!userData.stall);
         localStorage.setItem("currentUser", JSON.stringify(userData));
         return response;
       }
@@ -79,12 +85,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const switchRole = (newRole: string) => {
+    if (currentUser) {
+      const updatedUser = { ...currentUser, role: newRole };
+      setCurrentUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+    }
+  };
+
+  const updateUser = (userData: Partial<User>) => {
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...userData };
+      setCurrentUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      if (userData.stall !== undefined) {
+        setHasStall(!!userData.stall);
+      }
+    }
+  };
+
   const value = {
     currentUser,
     isAuthenticated,
     login,
     logout,
     register,
+    switchRole,
+    updateUser,
+    hasStall,
+    setHasStall,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
