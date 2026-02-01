@@ -28,6 +28,8 @@ export const createUser = async (user: IUser) => {
     if (!user.role) {
       user.role = "buyer";
     }
+    // Set status to pending by default (except for admin if needed, but usually admin is seeded)
+    user.status = "pending";
     const newUser = await userRepo.createUser(user);
     return newUser;
   } catch (error) {
@@ -42,17 +44,28 @@ export const loginUser = async (user: IUser) => {
     const existingUser = await userRepo.findUserByEmail(user.email);
     console.log("Existing User:", existingUser);
     if (!existingUser) {
-      throw new Error("User not found");
+      throw new Error("Invalid credentials");
     }
     const isPasswordValid = await bcrypt.compare(
       user.password,
       existingUser.getDataValue("password"),
     );
     if (!isPasswordValid) {
-      throw new Error("Invalid password");
+      throw new Error("Invalid credentials");
+    }
+
+    const status = existingUser.getDataValue("status");
+    if (status === "pending") {
+      throw new Error("Your account is pending admin approval.");
+    }
+    if (status === "rejected") {
+      throw new Error("Your account has been rejected by admin.");
     }
     const jsonwebtoken = jwt.sign(
-      { id: existingUser.getDataValue("id") },
+      {
+        id: existingUser.getDataValue("id"),
+        role: existingUser.getDataValue("role")
+      },
       secretKey,
       { expiresIn: "24h" },
     );
@@ -81,6 +94,51 @@ export const updateUserProfile = async (id: number, userData: Partial<IUser>) =>
     await userRepo.updateUser(id, userData as any);
     const updatedUser = await userRepo.getUserById(id);
     return updatedUser;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const users = await userRepo.getAllUsers();
+    // Filter out passwords
+    return users.map((u: any) => {
+      const data = u.toJSON();
+      delete data.password;
+      return data;
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getPendingUsers = async () => {
+  try {
+    const users = await userRepo.getPendingUsers();
+    return users.map((u: any) => {
+      const data = u.toJSON();
+      delete data.password;
+      return data;
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const approveUser = async (id: number) => {
+  try {
+    await userRepo.updateUser(id, { status: "active" } as any);
+    return { success: true, message: "User approved successfully" };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const rejectUser = async (id: number) => {
+  try {
+    await userRepo.updateUser(id, { status: "rejected" } as any);
+    return { success: true, message: "User rejected successfully" };
   } catch (error) {
     throw error;
   }

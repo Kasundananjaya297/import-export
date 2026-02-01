@@ -24,6 +24,8 @@ import orderRoutes from "./routes/orderRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import complaintRoutes from "./routes/complaintRoutes";
 import stallRoutes from "./routes/stallRoutes";
+import fishMetadataRoutes from "./routes/fishMetadataRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
 import cors from "cors";
 // Import models with associations
 import "./models/index";
@@ -44,7 +46,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:5174",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     exposedHeaders: ["Authorization"],
@@ -93,15 +95,24 @@ app.use("/api/complaint", complaintRoutes);
 // Stall Routes
 app.use("/api/stall", stallRoutes);
 
+// Fish Metadata Routes
+app.use("/api/fish-metadata", fishMetadataRoutes);
+
+// Review Routes
+app.use("/api/reviews", reviewRoutes);
+
 // Serve static files for uploaded images
 app.use("/shared/uploads", express.static("shared/uploads"));
 
 // Database connection and server start
 // Database connection and server start
+import { seedAdmin } from "./seeders/adminSeeder";
+
 sequelize
-  .sync({ alter: true }) // Changed to alter: true to update db schema with new Fish Listing columns
-  .then(() => {
+  .sync({ alter: true })
+  .then(async () => {
     console.log("MySQL connected!");
+    await seedAdmin();
     const server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);

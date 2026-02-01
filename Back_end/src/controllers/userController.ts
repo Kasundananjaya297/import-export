@@ -20,8 +20,8 @@ export const createUser = async (
       response = responseDTO("error", null, "User data is required");
       res.status(400).json(response);
     }
-  } catch {
-    response = responseDTO("error", null, "Error creating user");
+  } catch (error: any) {
+    response = responseDTO("error", null, error.message || "Error creating user");
     res.status(500).json(response);
   }
 };
@@ -44,8 +44,8 @@ export const loginUser = async (
       response = responseDTO("error", null, "User data is required");
       res.status(400).json(response);
     }
-  } catch (error) {
-    response = responseDTO("error", null, "Error logging in user");
+  } catch (error: any) {
+    response = responseDTO("error", null, error.message || "Error logging in user");
     res.status(500).json(response);
   }
 };
@@ -70,6 +70,66 @@ export const updateProfile = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: error.message || "Error updating profile",
+    });
+  }
+};
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.json({
+      success: true,
+      data: users,
+    });
+  } catch (error: any) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error fetching all users",
+    });
+  }
+};
+
+export const getPendingUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await userService.getPendingUsers();
+    res.json({
+      success: true,
+      data: users,
+    });
+  } catch (error: any) {
+    console.error("Error fetching pending users:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error fetching pending users",
+    });
+  }
+};
+
+export const approveUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await userService.approveUser(Number(id));
+    res.json(result);
+  } catch (error: any) {
+    console.error("Error approving user:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error approving user",
+    });
+  }
+};
+
+export const rejectUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await userService.rejectUser(Number(id));
+    res.json(result);
+  } catch (error: any) {
+    console.error("Error rejecting user:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error rejecting user",
     });
   }
 };

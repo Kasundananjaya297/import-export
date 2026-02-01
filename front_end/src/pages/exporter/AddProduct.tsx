@@ -19,6 +19,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { productService, AddProductData } from "../../services/productService";
+import { metadataService, Species, Variety } from "../../services/metadataService";
 import CloudinaryImageUpload from "../../components/common/CloudinaryImageUpload";
 import ImageGallery from "../../components/common/ImageGallery";
 import { useAuth } from "../../context/AuthContext";
@@ -41,6 +42,9 @@ const AddProduct: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { currentUser, hasStall } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [speciesList, setSpeciesList] = useState<Species[]>([]);
+  const [varietiesList, setVarietiesList] = useState<Variety[]>([]);
+  const [filteredVarieties, setFilteredVarieties] = useState<Variety[]>([]);
 
   useEffect(() => {
     if ((currentUser?.role === "seller" || currentUser?.role === "exporter") && !hasStall) {
@@ -49,6 +53,23 @@ const AddProduct: React.FC = () => {
       });
       navigate("/create-stall");
     }
+
+    // Fetch species and varieties
+    const fetchMetadata = async () => {
+      try {
+        const [speciesData, varietiesData] = await Promise.all([
+          metadataService.getSpecies(),
+          metadataService.getVarieties()
+        ]);
+        setSpeciesList(speciesData);
+        setVarietiesList(varietiesData);
+      } catch (error) {
+        console.error("Error fetching metadata:", error);
+        enqueueSnackbar("Failed to load species and varieties.", { variant: "error" });
+      }
+    };
+
+    fetchMetadata();
   }, [currentUser, hasStall, navigate, enqueueSnackbar]);
 
   const [formData, setFormData] = useState<AddProductData>({
@@ -94,7 +115,22 @@ const AddProduct: React.FC = () => {
 
   const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // If species changes, filter varieties and reset selected variety
+    if (name === "species") {
+      const selectedSpecies = speciesList.find(s => s.name === value);
+      if (selectedSpecies) {
+        const filtered = varietiesList.filter(v => v.speciesId === selectedSpecies.id);
+        setFilteredVarieties(filtered);
+        setFormData(prev => ({ ...prev, variety: "" }));
+      } else {
+        setFilteredVarieties([]);
+        setFormData(prev => ({ ...prev, variety: "" }));
+      }
+    }
+
     if (errors[name as keyof AddProductData]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -178,28 +214,46 @@ const AddProduct: React.FC = () => {
               />
             </Grid>
 
-
-
-
-
             {/* New Fish Listing Fields */}
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Species"
-                name="species"
-                value={formData.species}
-                onChange={handleChange}
-              />
+              <FormControl fullWidth>
+                <InputLabel>Species</InputLabel>
+                <Select
+                  name="species"
+                  value={formData.species}
+                  label="Species"
+                  onChange={handleSelectChange}
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {speciesList.map((s) => (
+                    <MenuItem key={s.id} value={s.name}>
+                      {s.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Variety"
-                name="variety"
-                value={formData.variety}
-                onChange={handleChange}
-              />
+              <FormControl fullWidth disabled={!formData.species}>
+                <InputLabel>Variety</InputLabel>
+                <Select
+                  name="variety"
+                  value={formData.variety}
+                  label="Variety"
+                  onChange={handleSelectChange}
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {filteredVarieties.map((v) => (
+                    <MenuItem key={v.id} value={v.name}>
+                      {v.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6}>

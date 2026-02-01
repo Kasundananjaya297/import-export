@@ -15,19 +15,26 @@ import {
     Card,
     CardContent,
     Stack,
+    Rating,
+    TextField,
 } from "@mui/material";
 import {
     ArrowBack as ArrowBackIcon,
     Store as StoreIcon,
-    Lightbulb as LightbulbIcon,
     Info as InfoIcon,
     Phone as PhoneIcon,
     Email as EmailIcon,
     WhatsApp as WhatsAppIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Close as CloseIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { productService, Product, Stall } from "../services/productService";
+import { reviewService } from "../services/reviewService";
+import { useAuth } from "../context/AuthContext";
 import ProductCard from "../components/products/ProductCard";
+import StarIcon from '@mui/icons-material/Star';
 
 const StallDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -36,19 +43,45 @@ const StallDetails: React.FC = () => {
 
     const [stall, setStall] = useState<Stall | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [stats, setStats] = useState<{ averageRating: number; totalReviews: number }>({ averageRating: 0, totalReviews: 0 });
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [newRating, setNewRating] = useState<number | null>(5);
+    const [newComment, setNewComment] = useState("");
+    const [userReview, setUserReview] = useState<any | null>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const { currentUser } = useAuth();
 
     useEffect(() => {
         const fetchStallData = async () => {
             if (!id) return;
             try {
                 setLoading(true);
-                const [stallData, productsData] = await Promise.all([
+                const [stallData, productsData, reviewData] = await Promise.all([
                     productService.getStallById(id),
                     productService.getProductsByStallId(id),
+                    reviewService.getReviewsByStallId(Number(id)),
                 ]);
                 setStall(stallData);
                 setProducts(productsData);
+                const fetchedReviews = reviewData.data.reviews || [];
+                setReviews(fetchedReviews);
+                setStats(reviewData.data.stats || { averageRating: 0, totalReviews: 0 });
+
+                // Find current user's review
+                if (currentUser) {
+                    const review = fetchedReviews.find((r: any) => r.userId === currentUser.id);
+                    if (review) {
+                        setUserReview(review);
+                        setNewRating(review.rating);
+                        setNewComment(review.comment);
+                    } else {
+                        setUserReview(null);
+                        setNewRating(5);
+                        setNewComment("");
+                    }
+                }
             } catch (err) {
                 console.error("Error fetching stall data:", err);
                 enqueueSnackbar("Failed to load stall details", { variant: "error" });
@@ -59,6 +92,76 @@ const StallDetails: React.FC = () => {
 
         fetchStallData();
     }, [id, enqueueSnackbar]);
+
+    const handleReviewSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id || !newRating || !newComment.trim()) return;
+
+        try {
+            setSubmitting(true);
+            if (isEditMode && userReview) {
+                await reviewService.updateReview(userReview.id, {
+                    rating: newRating,
+                    comment: newComment,
+                });
+                enqueueSnackbar("Review updated successfully!", { variant: "success" });
+                setIsEditMode(false);
+            } else {
+                await reviewService.createReview({
+                    stallId: Number(id),
+                    rating: newRating,
+                    comment: newComment,
+                });
+                enqueueSnackbar("Review submitted successfully!", { variant: "success" });
+            }
+
+            // Refresh reviews
+            const reviewData = await reviewService.getReviewsByStallId(Number(id));
+            const fetchedReviews = reviewData.data.reviews || [];
+            setReviews(fetchedReviews);
+            setStats(reviewData.data.stats || { averageRating: 0, totalReviews: 0 });
+
+            // Re-find user review
+            if (currentUser) {
+                const review = fetchedReviews.find((r: any) => r.userId === currentUser.id);
+                setUserReview(review || null);
+            }
+        } catch (error: any) {
+            enqueueSnackbar(error.message || "Failed to submit review", { variant: "error" });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId?: number) => {
+        const idToDelete = reviewId || userReview?.id;
+        if (!idToDelete) return;
+
+        if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+        try {
+            setSubmitting(true);
+            await reviewService.deleteReview(idToDelete);
+            enqueueSnackbar("Review deleted successfully!", { variant: "success" });
+
+            // If deleting own review, clear states
+            if (userReview && idToDelete === userReview.id) {
+                setUserReview(null);
+                setNewRating(5);
+                setNewComment("");
+                setIsEditMode(false);
+            }
+
+            // Refresh reviews
+            const reviewData = await reviewService.getReviewsByStallId(Number(id));
+            setReviews(reviewData.data.reviews || []);
+            setStats(reviewData.data.stats || { averageRating: 0, totalReviews: 0 });
+        } catch (error: any) {
+            enqueueSnackbar(error.message || "Failed to delete review", { variant: "error" });
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -127,6 +230,17 @@ const StallDetails: React.FC = () => {
                             <Typography variant="h2" component="h1" sx={{ fontWeight: 800, mb: 1, fontSize: { xs: '2.5rem', md: '3.75rem' } }}>
                                 {stall.stallName}
                             </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                <Rating
+                                    value={stats.averageRating}
+                                    precision={0.5}
+                                    readOnly
+                                    emptyIcon={<StarIcon style={{ opacity: 0.55, color: 'white' }} fontSize="inherit" />}
+                                />
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                    {stats.averageRating} ({stats.totalReviews} reviews)
+                                </Typography>
+                            </Box>
                             <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 400, maxWidth: 600 }}>
                                 {stall.description || "Welcome to our specialized fish stall. We provide the highest quality aquatic life for your collection."}
                             </Typography>
@@ -138,14 +252,13 @@ const StallDetails: React.FC = () => {
             {/* Main Content */}
             <Container maxWidth="lg" sx={{ mt: -4, position: 'relative', zIndex: 1 }}>
                 <Grid container spacing={4}>
-                    {/* Products Section */}
+                    {/* Products & Reviews Section */}
                     <Grid item xs={12} md={9}>
-                        <Box className="glass-panel" sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, bgcolor: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                        <Box className="glass-panel" sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, bgcolor: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', mb: 4 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                                 <Typography variant="h5" sx={{ fontWeight: 800 }}>
                                     Available Products ({products.length})
                                 </Typography>
-                                {/* Filter placeholders for later */}
                             </Box>
 
                             {products.length > 0 ? (
@@ -163,6 +276,160 @@ const StallDetails: React.FC = () => {
                                     </Typography>
                                 </Box>
                             )}
+                        </Box>
+
+                        {/* Reviews Section */}
+                        <Box className="glass-panel" sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, bgcolor: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                            <Typography variant="h5" sx={{ fontWeight: 800, mb: 4 }}>
+                                Ratings & Reviews
+                            </Typography>
+
+                            {/* Review Form */}
+                            {currentUser && (currentUser.role === 'buyer' || currentUser.role === 'importer') ? (
+                                userReview && !isEditMode ? (
+                                    <Box sx={{ mb: 6, p: 3, bgcolor: 'primary.50', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Box>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>You've already reviewed this stall</Typography>
+                                            <Typography variant="caption" color="text.secondary">Thank you for your feedback!</Typography>
+                                        </Box>
+                                        <Stack direction="row" spacing={1}>
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                startIcon={<EditIcon />}
+                                                onClick={() => setIsEditMode(true)}
+                                            >
+                                                Edit Review
+                                            </Button>
+                                            <Button
+                                                variant="outlined"
+                                                color="error"
+                                                size="small"
+                                                startIcon={<DeleteIcon />}
+                                                onClick={() => handleDeleteReview()}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </Stack>
+                                    </Box>
+                                ) : (
+                                    <Box component="form" onSubmit={handleReviewSubmit} sx={{ mb: 6, p: 3, bgcolor: isEditMode ? 'amber.50' : 'grey.50', borderRadius: 2 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                                {isEditMode ? 'Edit Your Review' : 'Write a Review'}
+                                            </Typography>
+                                            {isEditMode && (
+                                                <IconButton size="small" onClick={() => {
+                                                    setIsEditMode(false);
+                                                    setNewRating(userReview.rating);
+                                                    setNewComment(userReview.comment);
+                                                }}>
+                                                    <CloseIcon />
+                                                </IconButton>
+                                            )}
+                                        </Box>
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>Your Rating</Typography>
+                                            <Rating
+                                                value={newRating}
+                                                onChange={(_, value) => setNewRating(value)}
+                                                size="large"
+                                            />
+                                        </Box>
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={3}
+                                            placeholder="Share your experience with this stall..."
+                                            value={newComment}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            sx={{ bgcolor: 'white', mb: 2 }}
+                                        />
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            disabled={submitting || !newRating || !newComment.trim()}
+                                            startIcon={submitting && <CircularProgress size={20} color="inherit" />}
+                                        >
+                                            {isEditMode ? 'Update Review' : 'Submit Review'}
+                                        </Button>
+                                    </Box>
+                                )
+                            ) : !currentUser ? (
+                                <Box sx={{ mb: 6, p: 3, bgcolor: 'blue.50', borderRadius: 2, textAlign: 'center' }}>
+                                    <Typography variant="body2">
+                                        Please <Button size="small" onClick={() => navigate('/login')}>Login</Button> to leave a review.
+                                    </Typography>
+                                </Box>
+                            ) : null}
+
+                            {/* Reviews List */}
+                            <Stack spacing={3}>
+                                {reviews.length > 0 ? (
+                                    reviews.map((review: any) => (
+                                        <Box key={review.id}>
+                                            <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
+                                                <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main' }}>
+                                                    {review.user?.fname?.[0] || 'U'}
+                                                </Avatar>
+                                                <Box sx={{ flexGrow: 1 }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                                                {review.user?.fname} {review.user?.lname}
+                                                            </Typography>
+                                                            {currentUser && review.userId === currentUser.id && (
+                                                                <Typography
+                                                                    variant="caption"
+                                                                    sx={{
+                                                                        px: 1,
+                                                                        py: 0.2,
+                                                                        bgcolor: 'primary.main',
+                                                                        color: 'white',
+                                                                        borderRadius: 1,
+                                                                        fontSize: '0.65rem',
+                                                                        fontWeight: 700
+                                                                    }}
+                                                                >
+                                                                    YOU
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {new Date(review.createdAt).toLocaleDateString()}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                        <Box>
+                                                            <Rating value={review.rating} size="small" readOnly sx={{ mb: 1 }} />
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {review.comment}
+                                                            </Typography>
+                                                        </Box>
+                                                        {currentUser && (review.userId === currentUser.id || currentUser.role === 'admin') && (
+                                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                                {review.userId === currentUser.id && (
+                                                                    <IconButton size="small" color="primary" onClick={() => setIsEditMode(true)}>
+                                                                        <EditIcon sx={{ fontSize: '1.2rem' }} />
+                                                                    </IconButton>
+                                                                )}
+                                                                <IconButton size="small" color="error" onClick={() => handleDeleteReview(review.id)}>
+                                                                    <DeleteIcon sx={{ fontSize: '1.2rem' }} />
+                                                                </IconButton>
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            </Box>
+                                            <Divider sx={{ mt: 2 }} />
+                                        </Box>
+                                    ))
+                                ) : (
+                                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                                        <Typography variant="body2" color="text.secondary">No reviews yet. Be the first to review!</Typography>
+                                    </Box>
+                                )}
+                            </Stack>
                         </Box>
                     </Grid>
 
@@ -268,12 +535,15 @@ const StallDetails: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Ready for ratings placeholder */}
-                            <Card sx={{ borderRadius: 4, bgcolor: 'rgba(240,249,255,0.5)', border: '1px dashed rgba(0,183,235,0.3)', boxShadow: 'none' }}>
+                            {/* Rating Summary Card */}
+                            <Card sx={{ borderRadius: 4, bgcolor: 'rgba(240,249,255,0.8)', border: '1px solid rgba(0,183,235,0.1)', boxShadow: 'none' }}>
                                 <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                                    <LightbulbIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1, opacity: 0.5 }} />
-                                    <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 800 }}>Ratings & Reviews</Typography>
-                                    <Typography variant="caption" color="text.secondary">Coming soon! You'll be able to see seller reputation and feedback here.</Typography>
+                                    <Typography variant="h3" color="primary.main" sx={{ fontWeight: 800, mb: 0.5 }}>
+                                        {stats.averageRating}
+                                    </Typography>
+                                    <Rating value={stats.averageRating} precision={0.5} readOnly sx={{ mb: 1 }} />
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Stall Reputation</Typography>
+                                    <Typography variant="caption" color="text.secondary">Based on {stats.totalReviews} buyer reviews</Typography>
                                 </CardContent>
                             </Card>
                         </Stack>

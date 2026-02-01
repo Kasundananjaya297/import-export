@@ -16,6 +16,7 @@ export interface IUser {
   company?: string;
   password: string;
   role: string;
+  status?: "pending" | "active" | "rejected";
 }
 
 export interface IProduct {
@@ -46,5 +47,6 @@ export interface IProduct {
   feedingFrequency?: string;
   video?: string;
   status?: "available" | "sold" | "out_of_stock";
+  approvalStatus?: "pending" | "approved" | "rejected";
   stallId?: number;
 }

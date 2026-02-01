@@ -2,7 +2,7 @@
 
 import express, { RequestHandler } from "express";
 import { productController } from "../controllers/productController";
-import { verifyToken } from "../middleware/auth";
+import { verifyToken, isAdmin } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -18,6 +18,28 @@ router.get(
   "/me",
   verifyToken as RequestHandler,
   productController.getProductByUserId as RequestHandler,
+);
+
+// Admin routes for product approval
+router.get(
+  "/admin/pending",
+  verifyToken as RequestHandler,
+  isAdmin as RequestHandler,
+  productController.getPendingProducts as RequestHandler,
+);
+
+router.patch(
+  "/:id/approve",
+  verifyToken as RequestHandler,
+  isAdmin as RequestHandler,
+  productController.approveProduct as RequestHandler,
+);
+
+router.patch(
+  "/:id/reject",
+  verifyToken as RequestHandler,
+  isAdmin as RequestHandler,
+  productController.rejectProduct as RequestHandler,
 );
 
 router.get("/:id", productController.getProductById as RequestHandler);

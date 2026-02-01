@@ -39,8 +39,23 @@ const Login = () => {
         </h2>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg mb-4 text-sm">
-            {error}
+          <div className={`${error.toLowerCase().includes('pending')
+              ? 'bg-amber-50 border-amber-200 text-amber-700'
+              : 'bg-red-50 border-red-200 text-red-600'
+            } p-4 rounded-xl mb-6 text-sm flex items-center gap-3 border shadow-sm animate-in fade-in slide-in-from-top-2 duration-300`}>
+            <div className={`p-1 rounded-full ${error.toLowerCase().includes('pending') ? 'bg-amber-100' : 'bg-red-100'
+              }`}>
+              {error.toLowerCase().includes('pending') ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">{error}</span>
           </div>
         )}
 

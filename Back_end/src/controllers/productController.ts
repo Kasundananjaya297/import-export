@@ -103,6 +103,7 @@ export const productController = {
         feedingFrequency,
         video,
         status: 'available',
+        approvalStatus: 'pending',
         stallId: stall.id,
       });
 
@@ -164,14 +165,22 @@ export const productController = {
   async updateProduct(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const userId = (req as any).user.id;
+      const user = (req as any).user;
 
-      const product = await productRepo.findOneProduct({ id: Number(id), userid: userId });
+      const product = await productRepo.getProductById(Number(id));
 
       if (!product) {
         return res.status(404).json({
           success: false,
-          message: "Product not found or unauthorized",
+          message: "Product not found",
+        });
+      }
+
+      // Allow if owner OR admin
+      if ((product as any).userid !== user.id && user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized",
         });
       }
 
@@ -224,14 +233,22 @@ export const productController = {
   async deleteProduct(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const userId = (req as any).user.id;
+      const user = (req as any).user;
 
-      const product = await productRepo.findOneProduct({ id: Number(id), userid: userId });
+      const product = await productRepo.getProductById(Number(id));
 
       if (!product) {
         return res.status(404).json({
           success: false,
-          message: "Product not found or unauthorized",
+          message: "Product not found",
+        });
+      }
+
+      // Allow if owner OR admin
+      if ((product as any).userid !== user.id && user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized",
         });
       }
 
@@ -270,6 +287,78 @@ export const productController = {
       res.status(500).json({
         success: false,
         message: "Error fetching products by stall ID",
+      });
+    }
+  },
+
+  async getPendingProducts(req: Request, res: Response) {
+    try {
+      const products = await productRepo.getPendingProducts();
+      res.json({
+        success: true,
+        data: products,
+      });
+    } catch (error) {
+      console.error("Error fetching pending products:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error fetching pending products",
+      });
+    }
+  },
+
+  async approveProduct(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const product = await productRepo.getProductById(Number(id));
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      await product.update({ approvalStatus: 'approved' });
+
+      res.json({
+        success: true,
+        message: "Product approved successfully",
+        data: product,
+      });
+    } catch (error) {
+      console.error("Error approving product:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error approving product",
+      });
+    }
+  },
+
+  async rejectProduct(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const product = await productRepo.getProductById(Number(id));
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      await product.update({ approvalStatus: 'rejected' });
+
+      res.json({
+        success: true,
+        message: "Product rejected successfully",
+        data: product,
+      });
+    } catch (error) {
+      console.error("Error rejecting product:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error rejecting product",
       });
     }
   },

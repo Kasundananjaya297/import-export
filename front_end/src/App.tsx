@@ -42,6 +42,14 @@ import EditProduct from "./pages/exporter/EditProduct";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
+import Users from "./pages/admin/Users";
+import AdminStallManagement from "./pages/admin/StallManagement";
+import AdminProductManagement from "./pages/admin/ProductManagement";
+import AdminFishMetadataManagement from "./pages/admin/FishMetadataManagement";
+import Reports from "./pages/admin/Reports";
+import SystemLogs from "./pages/admin/SystemLogs";
+import ProductApproval from "./pages/admin/ProductApproval";
+import UserApproval from "./pages/admin/UserApproval";
 
 function App() {
   return (
@@ -80,12 +88,75 @@ function App() {
                   }
                 />
 
-                {/* Admin Routes */}
                 <Route
                   path="/admin/dashboard"
                   element={
                     <ProtectedRoute roles={["admin"]}>
                       <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <Users />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/stalls"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <AdminStallManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/products"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <AdminProductManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/fish-metadata"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <AdminFishMetadataManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/reports"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <Reports />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/logs"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <SystemLogs />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/product-approvals"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <ProductApproval />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/user-approvals"
+                  element={
+                    <ProtectedRoute roles={["admin"]}>
+                      <UserApproval />
                     </ProtectedRoute>
                   }
                 />

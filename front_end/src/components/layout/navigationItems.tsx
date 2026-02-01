@@ -10,7 +10,8 @@ import {
   BarChart as BarChartIcon,
   Article as ArticleIcon,
   Store as StoreIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  FactCheck as FactCheckIcon
 } from '@mui/icons-material';
 
 interface NavItem {
@@ -102,9 +103,34 @@ export const getNavItems = (role: string): NavItem[] => {
           icon: <PeopleAltIcon />
         },
         {
+          label: 'User Approvals',
+          path: '/admin/user-approvals',
+          icon: <FactCheckIcon />
+        },
+        {
           label: 'Complaints',
           path: '/admin/complaints',
           icon: <SupportIcon />
+        },
+        {
+          label: 'Stall Management',
+          path: '/admin/stalls',
+          icon: <StoreIcon />
+        },
+        {
+          label: 'Product Management',
+          path: '/admin/products',
+          icon: <InventoryIcon />
+        },
+        {
+          label: 'Product Approvals',
+          path: '/admin/product-approvals',
+          icon: <FactCheckIcon />
+        },
+        {
+          label: 'Fish Metadata',
+          path: '/admin/fish-metadata',
+          icon: <ListAltIcon />
         },
         {
           label: 'Reports',

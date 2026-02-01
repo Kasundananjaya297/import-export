@@ -110,6 +110,10 @@ Product.init(
       type: DataTypes.ENUM('available', 'sold', 'out_of_stock'),
       defaultValue: 'available',
     },
+    approvalStatus: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      defaultValue: 'pending',
+    },
     userid: {
       type: DataTypes.INTEGER,
       allowNull: false,

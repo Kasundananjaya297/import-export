@@ -44,6 +44,7 @@ export interface Product {
     stallName: string;
     logo?: string;
   };
+  approvalStatus?: "pending" | "approved" | "rejected";
 }
 
 export interface Stall {
@@ -405,6 +406,25 @@ class ProductService {
   async getProductsByStallId(stallId: string): Promise<Product[]> {
     const response = await api.get(API_ENDPOINTS.PRODUCT.GET_PUBLIC_BY_STALL(stallId));
     return response.data.data;
+  }
+
+  async getPendingProducts(): Promise<Product[]> {
+    const response = await api.get(API_ENDPOINTS.PRODUCT.GET_PENDING_ADMIN);
+    return response.data.data;
+  }
+
+  async approveProduct(id: number): Promise<void> {
+    const response = await api.patch(API_ENDPOINTS.PRODUCT.APPROVE(id));
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to approve product");
+    }
+  }
+
+  async rejectProduct(id: number): Promise<void> {
+    const response = await api.patch(API_ENDPOINTS.PRODUCT.REJECT(id));
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to reject product");
+    }
   }
 }
 

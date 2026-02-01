@@ -10,6 +10,7 @@ export const createProduct = async (product: Omit<IProduct, "id">) => {
 
 export const getAllProducts = async () => {
   const products = await Product.findAll({
+    where: { approvalStatus: 'approved' },
     include: [
       {
         model: User,
@@ -72,8 +73,27 @@ export const getProductByUserId = async (id: number) => {
 
 export const getProductByStallId = async (stallId: number) => {
   const products = await Product.findAll({
-    where: { stallId },
+    where: { stallId, approvalStatus: 'approved' },
     include: [{ model: User, as: "user", attributes: ["fname", "lname", "email", "contact"] }],
+  });
+  return products;
+};
+
+export const getPendingProducts = async () => {
+  const products = await Product.findAll({
+    where: { approvalStatus: 'pending' },
+    include: [
+      {
+        model: User,
+        as: "user",
+        attributes: ["id", "fname", "lname", "company", "email", "contact"],
+      },
+      {
+        model: Stall,
+        as: "stall",
+        attributes: ["id", "stallName", "logo"],
+      },
+    ],
   });
   return products;
 };

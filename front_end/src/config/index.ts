@@ -15,12 +15,17 @@ export const API_ENDPOINTS = {
     GET_BY_USER: "/stall/me",
     UPDATE: "/stall/update",
     GET_PUBLIC: (id: string) => `/stall/public/${id}`,
+    GET_ALL: "/stall/all",
   },
   USER: {
     CREATE: "/user/create",
     LOGIN: "/user/login",
     GET_CURRENT: "/user/me",
     UPDATE_PROFILE: "/user/update",
+    GET_ALL: "/user/all",
+    GET_PENDING: "/user/pending",
+    APPROVE: (id: number) => `/user/${id}/approve`,
+    REJECT: (id: number) => `/user/${id}/reject`,
   },
   PRODUCT: {
     CREATE: "/products/create",
@@ -33,6 +38,9 @@ export const API_ENDPOINTS = {
     GET_PUBLIC_BY_STALL: (stallId: string) =>
       `/products/public/stall/${stallId}`,
     GET_BY_USER_ID: "/products/me",
+    GET_PENDING_ADMIN: "/products/admin/pending",
+    APPROVE: (id: number) => `/products/${id}/approve`,
+    REJECT: (id: number) => `/products/${id}/reject`,
   },
   ORDER: {
     CREATE: "/order/create",
@@ -69,6 +77,26 @@ export const API_ENDPOINTS = {
     GET_ALL: "/transactions",
     GET_BY_ID: (id: string) => `/transactions/${id}`,
     GET_USER_TRANSACTIONS: (userId: string) => `/transactions/user/${userId}`,
+  },
+  FISH_METADATA: {
+    SPECIES: {
+      GET_ALL: "/fish-metadata/species",
+      CREATE: "/fish-metadata/species",
+      UPDATE: (id: number) => `/fish-metadata/species/${id}`,
+      DELETE: (id: number) => `/fish-metadata/species/${id}`,
+    },
+    VARIETY: {
+      GET_ALL: "/fish-metadata/varieties",
+      CREATE: "/fish-metadata/varieties",
+      UPDATE: (id: number) => `/fish-metadata/varieties/${id}`,
+      DELETE: (id: number) => `/fish-metadata/varieties/${id}`,
+    },
+  },
+  REVIEWS: {
+    CREATE: "/reviews",
+    UPDATE: (id: number) => `/reviews/${id}`,
+    DELETE: (id: number) => `/reviews/${id}`,
+    GET_BY_STALL: (stallId: number) => `/reviews/stall/${stallId}`,
   },
 };
 

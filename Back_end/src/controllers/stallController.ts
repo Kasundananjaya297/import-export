@@ -52,14 +52,21 @@ export const getStall = async (req: Request, res: Response) => {
 
 export const updateStall = async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user?.id;
-        const { stallName, description, logo, status } = req.body;
+        const user = (req as any).user;
+        const { id, stallName, description, logo, status } = req.body;
 
-        if (!userId) {
+        if (!user?.id) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
-        const stall = await Stall.findOne({ where: { userId } });
+        // Allow update by ID if admin, otherwise find by current userId
+        let stall;
+        if (user.role === 'admin' && id) {
+            stall = await Stall.findByPk(id);
+        } else {
+            stall = await Stall.findOne({ where: { userId: user.id } });
+        }
+
         if (!stall) {
             return res.status(404).json({ success: false, message: "Stall not found" });
         }
@@ -74,6 +81,24 @@ export const updateStall = async (req: Request, res: Response) => {
         res.status(200).json({ success: true, data: stall, message: "Stall updated successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: "Error updating stall" });
+    }
+};
+
+export const getAllStalls = async (req: Request, res: Response) => {
+    try {
+        const stalls = await Stall.findAll({
+            include: [
+                {
+                    model: (require("../models").User),
+                    as: "user",
+                    attributes: ["id", "fname", "lname", "email", "contact"],
+                }
+            ]
+        });
+        res.status(200).json({ success: true, data: stalls });
+    } catch (error) {
+        console.error("Error fetching all stalls:", error);
+        res.status(500).json({ success: false, message: "Error fetching stalls" });
     }
 };
 

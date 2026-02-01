@@ -2,7 +2,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/db";
 
-class User extends Model {}
+class User extends Model { }
 
 User.init(
   {
@@ -73,6 +73,10 @@ User.init(
     password: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM("pending", "active", "rejected"),
+      defaultValue: "pending",
     },
   },
   {

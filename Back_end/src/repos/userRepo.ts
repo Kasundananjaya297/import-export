@@ -42,6 +42,14 @@ export const getAllUsers = async () => {
     throw error;
   }
 };
+export const getPendingUsers = async () => {
+  try {
+    const users = await User.findAll({ where: { status: "pending" } });
+    return users;
+  } catch (error) {
+    throw error;
+  }
+};
 export const updateUser = async (id: number, user: IUser) => {
   try {
     const updatedUser = await User.update({ ...user }, { where: { id } });

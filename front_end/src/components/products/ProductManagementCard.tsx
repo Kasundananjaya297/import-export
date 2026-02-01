@@ -145,7 +145,32 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
     return Math.min((product.quantity / maxStock) * 100, 100);
   };
 
+  const getApprovalStatus = () => {
+    switch (product.approvalStatus) {
+      case "approved":
+        return {
+          color: "success",
+          text: "Approved",
+          icon: <CheckCircleIcon />,
+        };
+      case "rejected":
+        return {
+          color: "error",
+          text: "Rejected",
+          icon: <CancelIcon />,
+        };
+      case "pending":
+      default:
+        return {
+          color: "warning",
+          text: "Pending Approval",
+          icon: <WarningIcon />,
+        };
+    }
+  };
+
   const stockStatus = getStockStatus();
+  const approvalStatus = getApprovalStatus();
   const stockPercentage = getStockPercentage();
 
   return (
@@ -328,6 +353,9 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
             top: 8,
             left: product.images && product.images.length > 1 ? 60 : 8,
             zIndex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
           }}
         >
           <Chip
@@ -336,6 +364,14 @@ const ProductManagementCard: React.FC<ProductManagementCardProps> = ({
             color={stockStatus.color as any}
             size="small"
             variant="filled"
+          />
+          <Chip
+            icon={approvalStatus.icon}
+            label={approvalStatus.text}
+            color={approvalStatus.color as any}
+            size="small"
+            variant="filled"
+            sx={{ fontWeight: "bold" }}
           />
         </Box>
 
