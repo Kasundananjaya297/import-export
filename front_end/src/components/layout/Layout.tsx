@@ -35,6 +35,8 @@ const Layout: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const isHomePage = location.pathname === "/";
+  const isFishPool = location.pathname === "/fish-pool";
+  const hideSidebar = isHomePage || isFishPool;
   const navItems = getNavItems(currentUser?.role || "importer");
 
   const handleDrawerToggle = () => {
@@ -49,11 +51,11 @@ const Layout: React.FC = () => {
     <Box sx={{ display: "flex" }}>
       <Navbar />
       <Drawer
-        variant={isMobile || isHomePage ? "temporary" : "persistent"}
-        open={isMobile || isHomePage ? open : true}
-        onClose={(isMobile || isHomePage) ? handleDrawerToggle : undefined}
+        variant={isMobile || hideSidebar ? "temporary" : "persistent"}
+        open={isMobile || hideSidebar ? open : true}
+        onClose={(isMobile || hideSidebar) ? handleDrawerToggle : undefined}
         sx={{
-          display: isHomePage && !open ? 'none' : 'block', // Hide completely if closed on home to prevent any flash or interaction
+          display: hideSidebar && !open ? 'none' : 'block', // Hide completely if closed on home/fish-pool
           width: drawerWidth,
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: {
@@ -115,7 +117,7 @@ const Layout: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { sm: hideSidebar ? "100%" : `calc(100% - ${drawerWidth}px)` },
           ml: { sm: 0 },
           p: 3,
           transition: theme.transitions.create("margin", {

@@ -1,8 +1,6 @@
 /** @format */
 
-import Product from "../models/products";
-import User from "../models/users";
-import Stall from "../models/stall";
+import { Product, User, Stall } from "../models";
 import { IProduct } from "../interfaces";
 
 export const createProduct = async (product: Omit<IProduct, "id">) => {

@@ -17,6 +17,7 @@ import Profile from "./pages/auth/Profile";
 import Home from "./pages/Home";
 import ProductDetails from "./pages/ProductDetails";
 import StallDetails from "./pages/StallDetails";
+import FishPool from "./pages/FishPool";
 
 // Importer Pages
 import ImporterDashboard from "./pages/importer/Dashboard";
@@ -59,6 +60,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/listing/:id" element={<ProductDetails />} />
                 <Route path="/stall/:id" element={<StallDetails />} />
+                <Route path="/fish-pool" element={<FishPool />} />
 
                 {/* Shared Routes */}
                 <Route

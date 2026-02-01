@@ -13,6 +13,13 @@ router.post(
   productController.create as RequestHandler,
 );
 router.get("/all", productController.getAllProducts as RequestHandler);
+// Product by current user 
+router.get(
+  "/me",
+  verifyToken as RequestHandler,
+  productController.getProductByUserId as RequestHandler,
+);
+
 router.get("/:id", productController.getProductById as RequestHandler);
 router.get("/public/stall/:stallId", productController.getProductsByStallId as RequestHandler);
 router.get(
