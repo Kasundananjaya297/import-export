@@ -24,59 +24,107 @@ export interface Product {
 
 export interface AddProductData {
   name: string;
-  category: string;
-  description: string;
+  category?: string;
+  description?: string;
   price: string;
   quantity: string;
   unit: string;
-  minOrderQuantity: string;
+  minOrderQuantity?: string;
   images: File[] | string[]; // Support both files and URLs
-  specifications: string;
-  origin: string;
-  certification: string;
+  specifications?: string;
+  origin?: string;
+  certification?: string;
+  // New fields
+  species?: string;
+  variety?: string;
+  wholesalePrice?: string;
+  sizeValue?: string;
+  sizeUnit?: string;
+  age?: string;
+  gender?: string;
+  breedingStatus?: string;
+  feedingFoodType?: string;
+  feedingFrequency?: string;
+  video?: string;
 }
 
 export interface AddProductWithCloudinaryData {
   name: string;
-  category: string;
-  description: string;
+  category?: string;
+  description?: string;
   price: string;
   quantity: string;
   unit: string;
-  minOrderQuantity: string;
+  minOrderQuantity?: string;
   images: string[]; // Image URLs from Cloudinary
-  specifications: string;
-  origin: string;
-  certification: string;
+  specifications?: string;
+  origin?: string;
+  certification?: string;
+  // New fields
+  species?: string;
+  variety?: string;
+  wholesalePrice?: string;
+  sizeValue?: string;
+  sizeUnit?: string;
+  age?: string;
+  gender?: string;
+  breedingStatus?: string;
+  feedingFoodType?: string;
+  feedingFrequency?: string;
+  video?: string;
 }
 
 // API Request Parameters
 export interface AddProductRequest {
   name: string;
-  category: string;
+  category?: string;
   description: string;
   price: number;
   quantity: number;
   unit: string;
-  minOrderQuantity: number;
-  specifications: string;
-  origin: string;
-  certification: string;
+  minOrderQuantity?: number;
+  specifications?: string;
+  origin?: string;
+  certification?: string;
   images: File[];
+  // New fields
+  species?: string;
+  variety?: string;
+  wholesalePrice?: number;
+  sizeValue?: number;
+  sizeUnit?: string;
+  age?: string;
+  gender?: string;
+  breedingStatus?: string;
+  feedingFoodType?: string;
+  feedingFrequency?: string;
+  video?: string;
 }
 
 export interface AddProductWithCloudinaryRequest {
   name: string;
-  category: string;
+  category?: string;
   description: string;
   price: number;
   quantity: number;
   unit: string;
-  minOrderQuantity: number;
-  specifications: string;
-  origin: string;
-  certification: string;
+  minOrderQuantity?: number;
+  specifications?: string;
+  origin?: string;
+  certification?: string;
   images: string[];
+  // New fields
+  species?: string;
+  variety?: string;
+  wholesalePrice?: number;
+  sizeValue?: number;
+  sizeUnit?: string;
+  age?: string;
+  gender?: string;
+  breedingStatus?: string;
+  feedingFoodType?: string;
+  feedingFrequency?: string;
+  video?: string;
 }
 
 // [ADDED FOR REQUIREMENT COMPLETION]: removed UpdateProductQuantityRequest interface
@@ -130,11 +178,24 @@ class ProductService {
       price: parseFloat(productData.price),
       quantity: parseInt(productData.quantity),
       unit: productData.unit,
-      minOrderQuantity: parseInt(productData.minOrderQuantity),
+      minOrderQuantity: productData.minOrderQuantity ? parseInt(productData.minOrderQuantity) : undefined,
       specifications: productData.specifications,
       origin: productData.origin,
       certification: productData.certification,
       images: productData.images as File[],
+      // New fields
+      species: productData.species,
+      variety: productData.variety,
+      wholesalePrice: productData.wholesalePrice ? parseFloat(productData.wholesalePrice) : undefined,
+      sizeValue: productData.sizeValue ? parseFloat(productData.sizeValue) : undefined,
+      sizeUnit: productData.sizeUnit,
+      ageValue: productData.ageValue ? parseFloat(productData.ageValue) : undefined,
+      ageUnit: productData.ageUnit,
+      gender: productData.gender,
+      breedingStatus: productData.breedingStatus,
+      feedingFoodType: productData.feedingFoodType,
+      feedingFrequency: productData.feedingFrequency,
+      video: productData.video,
     };
 
     // Append all text fields
@@ -168,11 +229,24 @@ class ProductService {
       price: parseFloat(productData.price),
       quantity: parseInt(productData.quantity),
       unit: productData.unit,
-      minOrderQuantity: parseInt(productData.minOrderQuantity),
+      minOrderQuantity: productData.minOrderQuantity ? parseInt(productData.minOrderQuantity) : undefined,
       specifications: productData.specifications,
       origin: productData.origin,
       certification: productData.certification,
       images: productData.images,
+      // New fields
+      species: productData.species,
+      variety: productData.variety,
+      wholesalePrice: productData.wholesalePrice ? parseFloat(productData.wholesalePrice) : undefined,
+      sizeValue: productData.sizeValue ? parseFloat(productData.sizeValue) : undefined,
+      sizeUnit: productData.sizeUnit,
+      ageValue: productData.ageValue ? parseFloat(productData.ageValue) : undefined,
+      ageUnit: productData.ageUnit,
+      gender: productData.gender,
+      breedingStatus: productData.breedingStatus,
+      feedingFoodType: productData.feedingFoodType,
+      feedingFrequency: productData.feedingFrequency,
+      video: productData.video,
     };
 
     const response = await api.post(API_ENDPOINTS.PRODUCT.CREATE, requestData, {

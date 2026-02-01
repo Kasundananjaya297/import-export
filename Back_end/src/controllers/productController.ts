@@ -22,14 +22,27 @@ export const productController = {
         certification,
         images,
         userId,
+        // New fields
+        species,
+        variety,
+        wholesalePrice,
+        sizeValue,
+        sizeUnit,
+        ageValue,
+        ageUnit,
+        gender,
+        breedingStatus,
+        feedingFoodType,
+        feedingFrequency,
+        video,
       } = req.body;
 
       // Validate required fields
-      if (!name || !category || !description || !price || !quantity || !unit) {
+      if (!name || !description || !price || !quantity || !unit) {
         return res.status(400).json({
           success: false,
           message:
-            "Missing required fields: name, category, description, price, quantity, unit",
+            "Missing required fields: name, description, price, quantity, unit",
         });
       }
 
@@ -59,6 +72,20 @@ export const productController = {
         certification: certification || "",
         images: imageUrls,
         userid: authenticatedUserId,
+        // New fields
+        species,
+        variety,
+        wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : undefined,
+        sizeValue: sizeValue ? parseFloat(sizeValue) : undefined,
+        sizeUnit,
+        ageValue: ageValue ? parseFloat(ageValue) : undefined,
+        ageUnit,
+        gender: gender || 'mixed',
+        breedingStatus: breedingStatus || 'not_paired',
+        feedingFoodType,
+        feedingFrequency,
+        video,
+        status: 'available',
       });
 
       res.status(201).json({

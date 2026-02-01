@@ -32,7 +32,7 @@ const categories = [
   "Other",
 ];
 
-const units = ["kg", "g", "lb", "ton", "piece", "box", "container"];
+const units = ["Piece", "Pair"];
 
 const AddProduct: React.FC = () => {
   const navigate = useNavigate();
@@ -51,6 +51,19 @@ const AddProduct: React.FC = () => {
     specifications: "",
     origin: "",
     certification: "",
+    // New fields
+    species: "",
+    variety: "",
+    wholesalePrice: "",
+    sizeValue: "",
+    sizeUnit: "cm",
+    ageValue: "",
+    ageUnit: "months",
+    gender: "mixed",
+    breedingStatus: "not_paired",
+    feedingFoodType: "",
+    feedingFrequency: "",
+    video: "",
   });
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -87,17 +100,14 @@ const AddProduct: React.FC = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) newErrors.name = "Product name is required";
-    if (!formData.category) newErrors.category = "Category is required";
-    if (!formData.description.trim())
-      newErrors.description = "Description is required";
+    // Category is now optional
+    // Description is now optional
     if (!formData.price) newErrors.price = "Price is required";
     if (!formData.quantity) newErrors.quantity = "Quantity is required";
     if (!formData.unit) newErrors.unit = "Unit is required";
-    if (!formData.minOrderQuantity)
-      newErrors.minOrderQuantity = "Minimum order quantity is required";
-    if (!formData.origin) newErrors.origin = "Origin is required";
+    // Origin is now optional
     if (imageUrls.length === 0) {
-      newErrors.images = "At least one product image is required";
+      newErrors.images = "At least one product image or video is required";
     }
 
     setErrors(newErrors);
@@ -156,40 +166,152 @@ const AddProduct: React.FC = () => {
               />
             </Grid>
 
+
+
+
+
+            {/* New Fish Listing Fields */}
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={!!errors.category}>
-                <InputLabel>Category</InputLabel>
+              <TextField
+                fullWidth
+                label="Species"
+                name="species"
+                value={formData.species}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Variety"
+                name="variety"
+                value={formData.variety}
+                onChange={handleChange}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Wholesale Price"
+                name="wholesalePrice"
+                type="number"
+                value={formData.wholesalePrice}
+                onChange={handleChange}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Gender</InputLabel>
                 <Select
-                  name="category"
-                  value={formData.category}
-                  label="Category"
+                  name="gender"
+                  value={formData.gender || "mixed"}
+                  label="Gender"
                   onChange={handleSelectChange}
                 >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="male">Male</MenuItem>
+                  <MenuItem value="female">Female</MenuItem>
+                  <MenuItem value="mixed">Mixed</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Breeding Status</InputLabel>
+                <Select
+                  name="breedingStatus"
+                  value={formData.breedingStatus || "not_paired"}
+                  label="Breeding Status"
+                  onChange={handleSelectChange}
+                >
+                  <MenuItem value="not_paired">Not Paired</MenuItem>
+                  <MenuItem value="paired_out">Paired Out</MenuItem>
+                  <MenuItem value="confirmed_pair">Confirmed Pair</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Size"
+                  name="sizeValue"
+                  value={formData.sizeValue}
+                  onChange={handleChange}
+                  placeholder="e.g. 5"
+                  type="number"
+                />
+                <FormControl sx={{ minWidth: 100 }}>
+                  <InputLabel>Unit</InputLabel>
+                  <Select
+                    name="sizeUnit"
+                    value={formData.sizeUnit}
+                    label="Unit"
+                    onChange={handleSelectChange}
+                  >
+                    <MenuItem value="cm">cm</MenuItem>
+                    <MenuItem value="inch">inch</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Age"
+                  name="ageValue"
+                  value={formData.ageValue}
+                  onChange={handleChange}
+                  placeholder="e.g. 2"
+                  type="number"
+                />
+                <FormControl sx={{ minWidth: 100 }}>
+                  <InputLabel>Unit</InputLabel>
+                  <Select
+                    name="ageUnit"
+                    value={formData.ageUnit}
+                    label="Unit"
+                    onChange={handleSelectChange}
+                  >
+                    <MenuItem value="months">Months</MenuItem>
+                    <MenuItem value="years">Years</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
               <TextField
-                required
                 fullWidth
-                label="Origin"
-                name="origin"
-                value={formData.origin}
+                label="Food Type"
+                name="feedingFoodType"
+                value={formData.feedingFoodType}
                 onChange={handleChange}
-                error={!!errors.origin}
-                helperText={errors.origin}
+                placeholder="e.g. Pellets, Live Food"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Feeding Frequency"
+                name="feedingFrequency"
+                value={formData.feedingFrequency}
+                onChange={handleChange}
+                placeholder="e.g. Twice a day"
               />
             </Grid>
 
+
+
             <Grid item xs={12}>
               <TextField
-                required
                 fullWidth
                 multiline
                 rows={4}
@@ -202,18 +324,7 @@ const AddProduct: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Specifications"
-                name="specifications"
-                value={formData.specifications}
-                onChange={handleChange}
-                placeholder="Enter product specifications, features, and details"
-              />
-            </Grid>
+
 
             <Grid item xs={12} sm={6}>
               <TextField
@@ -266,34 +377,13 @@ const AddProduct: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                required
-                fullWidth
-                label="Minimum Order Quantity"
-                name="minOrderQuantity"
-                type="number"
-                value={formData.minOrderQuantity}
-                onChange={handleChange}
-                error={!!errors.minOrderQuantity}
-                helperText={errors.minOrderQuantity}
-              />
-            </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Certification"
-                name="certification"
-                value={formData.certification}
-                onChange={handleChange}
-                placeholder="Enter any certifications or quality standards"
-              />
-            </Grid>
+
+
 
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Product Images
+                Product Images & Videos
               </Typography>
               <CloudinaryImageUpload
                 onImagesChange={handleImagesChange}
@@ -305,7 +395,7 @@ const AddProduct: React.FC = () => {
             {imageUrls.length > 0 && (
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Image Preview
+                  Media Preview
                 </Typography>
                 <ImageGallery
                   images={imageUrls}
@@ -336,7 +426,7 @@ const AddProduct: React.FC = () => {
           </Grid>
         </Box>
       </Paper>
-    </Container>
+    </Container >
   );
 };
 

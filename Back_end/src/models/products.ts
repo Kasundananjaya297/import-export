@@ -2,7 +2,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/db";
 
-class Product extends Model {}
+class Product extends Model { }
 
 Product.init(
   {
@@ -17,11 +17,11 @@ Product.init(
     },
     category: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     price: {
       type: DataTypes.DECIMAL(10, 2),
@@ -37,23 +37,78 @@ Product.init(
     },
     minOrderQuantity: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     specifications: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     origin: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     certification: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     images: {
       type: DataTypes.JSON, // Store image URLs as JSON array
       allowNull: false,
+    },
+    // New fields for Fish Listing
+    species: {
+      type: DataTypes.STRING,
+      allowNull: true, // Optional for now to avoid breaking existing data immediately, or should be false per req
+    },
+    variety: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    wholesalePrice: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
+    // 'price' reused as retailPrice
+    sizeValue: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    sizeUnit: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    ageValue: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    ageUnit: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    gender: {
+      type: DataTypes.ENUM('male', 'female', 'mixed'),
+      defaultValue: 'mixed',
+    },
+    breedingStatus: {
+      type: DataTypes.ENUM('not_paired', 'paired_out', 'confirmed_pair'),
+      defaultValue: 'not_paired',
+    },
+    // Flattened feedingDetails
+    feedingFoodType: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    feedingFrequency: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    video: {
+      type: DataTypes.STRING, // URL
+      allowNull: true,
+    },
+    status: {
+      type: DataTypes.ENUM('available', 'sold', 'out_of_stock'),
+      defaultValue: 'available',
     },
     userid: {
       type: DataTypes.INTEGER,

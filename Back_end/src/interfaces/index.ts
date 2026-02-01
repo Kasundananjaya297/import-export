@@ -21,15 +21,29 @@ export interface IUser {
 export interface IProduct {
   id?: number;
   name: string;
-  category: string;
+  category?: string;
   description: string;
   price: number;
   quantity: number;
   unit: string;
   minOrderQuantity: number;
   specifications: string;
-  origin: string;
+  origin?: string;
   certification: string;
   images: string[]; // Array of image URLs
   userid: number;
+  species?: string;
+  variety?: string;
+  wholesalePrice?: number;
+  // Size split
+  sizeValue?: number;
+  sizeUnit?: string;
+  ageValue?: number;
+  ageUnit?: string;
+  gender?: "male" | "female" | "mixed";
+  breedingStatus?: "not_paired" | "paired_out" | "confirmed_pair";
+  feedingFoodType?: string;
+  feedingFrequency?: string;
+  video?: string;
+  status?: "available" | "sold" | "out_of_stock";
 }

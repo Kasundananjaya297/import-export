@@ -95,7 +95,7 @@ app.use("/shared/uploads", express.static("shared/uploads"));
 // Database connection and server start
 // Database connection and server start
 sequelize
-  .sync({ force: false }) // Changed back to false after creating tables with foreign keys
+  .sync({ alter: true }) // Changed to alter: true to update db schema with new Fish Listing columns
   .then(() => {
     console.log("MySQL connected!");
     const server = app.listen(PORT, () => {

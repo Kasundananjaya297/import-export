@@ -29,6 +29,7 @@ interface UploadedImage {
   id: string;
   url: string;
   publicId: string;
+  resourceType?: "image" | "video";
   isUploading?: boolean;
 }
 
@@ -60,6 +61,7 @@ const CloudinaryImageUpload: React.FC<ImageUploadProps> = ({
             id: `temp-${Date.now()}-${index}`,
             url: URL.createObjectURL(file),
             publicId: "",
+            resourceType: file.type.startsWith("video/") ? "video" : "image",
             isUploading: true,
           }),
         );
@@ -77,6 +79,7 @@ const CloudinaryImageUpload: React.FC<ImageUploadProps> = ({
             id: result.public_id,
             url: result.secure_url,
             publicId: result.public_id,
+            resourceType: (result.resource_type as "image" | "video") || "image",
             isUploading: false,
           };
           newImages.push(uploadedImage);
@@ -150,7 +153,7 @@ const CloudinaryImageUpload: React.FC<ImageUploadProps> = ({
             type="file"
             hidden
             multiple
-            accept="image/*"
+            accept="image/*,video/*"
             onChange={handleFileSelect}
           />
         </Button>
@@ -189,17 +192,33 @@ const CloudinaryImageUpload: React.FC<ImageUploadProps> = ({
                     },
                   }}
                 >
-                  <CardMedia
-                    component="img"
-                    height="140"
-                    image={image.url}
-                    alt={`Product image ${index + 1}`}
-                    sx={{
-                      objectFit: "cover",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => window.open(image.url, "_blank")}
-                  />
+                  {image.resourceType === "video" ? (
+                    <Box
+                      component="video"
+                      src={image.url}
+                      controls={false} // Hide default controls for cleaner look
+                      onClick={() => window.open(image.url, "_blank")}
+                      sx={{
+                        width: "100%",
+                        height: 140,
+                        objectFit: "cover",
+                        cursor: "pointer",
+                        display: "block",
+                      }}
+                    />
+                  ) : (
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={image.url}
+                      alt={`Product media ${index + 1}`}
+                      sx={{
+                        objectFit: "cover",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => window.open(image.url, "_blank")}
+                    />
+                  )}
 
                   {/* Image number badge */}
                   <Box

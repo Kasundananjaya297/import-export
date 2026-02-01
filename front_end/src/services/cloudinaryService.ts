@@ -17,7 +17,7 @@ export interface CloudinaryUploadResponse {
 export class CloudinaryService {
   private static instance: CloudinaryService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): CloudinaryService {
     if (!CloudinaryService.instance) {
@@ -30,10 +30,9 @@ export class CloudinaryService {
    * Upload a single image to Cloudinary
    */
   async uploadImage(file: File): Promise<CloudinaryUploadResponse> {
-    // Validate file before upload
-    const validationError = validateImageFile(file);
-    if (validationError) {
-      throw new Error(validationError);
+    // Validate file type (image or video)
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      throw new Error("Invalid file type. Please upload an image or video.");
     }
 
     const formData = new FormData();
@@ -43,7 +42,7 @@ export class CloudinaryService {
 
     try {
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`,
         {
           method: "POST",
           body: formData,
