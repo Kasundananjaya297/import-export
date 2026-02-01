@@ -81,7 +81,15 @@ export const getStallById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const stallId = typeof id === 'string' ? id : id[0];
-        const stall = await Stall.findByPk(stallId);
+        const stall = await Stall.findByPk(stallId, {
+            include: [
+                {
+                    model: (require("../models").User),
+                    as: "user",
+                    attributes: ["id", "fname", "lname", "email", "contact"],
+                }
+            ]
+        });
         if (!stall) {
             return res.status(404).json({ success: false, message: "Stall not found" });
         }

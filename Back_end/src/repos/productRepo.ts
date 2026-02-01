@@ -16,7 +16,7 @@ export const getAllProducts = async () => {
       {
         model: User,
         as: "user",
-        attributes: ["id", "fname", "lname", "company"],
+        attributes: ["id", "fname", "lname", "company", "email", "contact"],
       },
       {
         model: Stall,
@@ -35,7 +35,7 @@ export const getProductById = async (id: number) => {
       {
         model: User,
         as: "user",
-        attributes: ["id", "fname", "lname", "company"],
+        attributes: ["id", "fname", "lname", "company", "email", "contact"],
       },
       {
         model: Stall,
@@ -54,7 +54,7 @@ export const findOneProduct = async (where: any) => {
       {
         model: User,
         as: "user",
-        attributes: ["id", "fname", "lname", "company"],
+        attributes: ["id", "fname", "lname", "company", "email", "contact"],
       },
     ],
   });
@@ -75,7 +75,7 @@ export const getProductByUserId = async (id: number) => {
 export const getProductByStallId = async (stallId: number) => {
   const products = await Product.findAll({
     where: { stallId },
-    include: [{ model: User, as: "user", attributes: ["fname", "lname"] }],
+    include: [{ model: User, as: "user", attributes: ["fname", "lname", "email", "contact"] }],
   });
   return products;
 };

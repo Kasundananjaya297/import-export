@@ -27,6 +27,9 @@ import {
     Info as InfoIcon,
     Store as StoreIcon,
     Lightbulb as LightbulbIcon,
+    Phone as PhoneIcon,
+    Email as EmailIcon,
+    WhatsApp as WhatsAppIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { productService, Product } from "../services/productService";
@@ -339,6 +342,68 @@ const ProductDetails: React.FC = () => {
                                             Visit Shop
                                         </Button>
                                     </Stack>
+
+                                    {/* Contact Section */}
+                                    {(product.user?.contact || product.user?.email) && (
+                                        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(0,183,235,0.1)' }}>
+                                            <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', mb: 1, display: 'block', textTransform: 'uppercase', letterSpacing: 1 }}>
+                                                Contact Seller
+                                            </Typography>
+                                            <Stack spacing={1.5}>
+                                                {product.user?.contact && (
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <PhoneIcon sx={{ fontSize: '0.9rem', color: 'text.secondary' }} />
+                                                        <Typography
+                                                            variant="body2"
+                                                            component="a"
+                                                            href={`tel:${product.user.contact}`}
+                                                            sx={{
+                                                                fontWeight: 600,
+                                                                color: 'inherit',
+                                                                textDecoration: 'none',
+                                                                '&:hover': { color: 'primary.main', textDecoration: 'underline' }
+                                                            }}
+                                                        >
+                                                            {product.user.contact}
+                                                        </Typography>
+                                                        <IconButton
+                                                            size="small"
+                                                            component="a"
+                                                            href={`https://wa.me/${product.user.contact.replace(/[^0-9]/g, '')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            sx={{
+                                                                color: '#25D366',
+                                                                padding: '2px',
+                                                                '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.1)' }
+                                                            }}
+                                                        >
+                                                            <WhatsAppIcon sx={{ fontSize: '1.2rem' }} />
+                                                        </IconButton>
+                                                    </Stack>
+                                                )}
+                                                {product.user?.email && (
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <EmailIcon sx={{ fontSize: '0.9rem', color: 'text.secondary' }} />
+                                                        <Typography
+                                                            variant="body2"
+                                                            component="a"
+                                                            href={`mailto:${product.user.email}`}
+                                                            sx={{
+                                                                fontWeight: 600,
+                                                                fontSize: '0.8rem',
+                                                                color: 'inherit',
+                                                                textDecoration: 'none',
+                                                                '&:hover': { color: 'primary.main', textDecoration: 'underline' }
+                                                            }}
+                                                        >
+                                                            {product.user.email}
+                                                        </Typography>
+                                                    </Stack>
+                                                )}
+                                            </Stack>
+                                        </Box>
+                                    )}
                                 </Box>
                             )}
 

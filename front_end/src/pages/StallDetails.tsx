@@ -9,6 +9,7 @@ import {
     Grid,
     Button,
     Avatar,
+    IconButton,
     CircularProgress,
     Divider,
     Card,
@@ -20,6 +21,9 @@ import {
     Store as StoreIcon,
     Lightbulb as LightbulbIcon,
     Info as InfoIcon,
+    Phone as PhoneIcon,
+    Email as EmailIcon,
+    WhatsApp as WhatsAppIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { productService, Product, Stall } from "../services/productService";
@@ -184,6 +188,81 @@ const StallDetails: React.FC = () => {
                                                 <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stall.status === 'active' ? 'success.main' : 'error.main' }} />
                                                 <Typography variant="body2" sx={{ fontWeight: 600, textTransform: 'capitalize' }}>{stall.status}</Typography>
                                             </Box>
+                                        </Box>
+                                    </Stack>
+
+                                    <Divider sx={{ my: 2, opacity: 0.5 }} />
+
+                                    {/* Contact Details Section */}
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        Contact Details
+                                    </Typography>
+                                    <Stack spacing={2}>
+                                        <Box>
+                                            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
+                                                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.main' }}>
+                                                    <PhoneIcon sx={{ fontSize: '1.2rem' }} />
+                                                </Avatar>
+                                                <Box sx={{ flexGrow: 1 }}>
+                                                    <Typography variant="caption" display="block" color="text.secondary">Phone Number</Typography>
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <Typography
+                                                            variant="body2"
+                                                            component="a"
+                                                            href={`tel:${stall.user?.contact}`}
+                                                            sx={{
+                                                                fontWeight: 600,
+                                                                color: 'inherit',
+                                                                textDecoration: 'none',
+                                                                '&:hover': { color: 'primary.main', textDecoration: 'underline' }
+                                                            }}
+                                                        >
+                                                            {stall.user?.contact || 'Not provided'}
+                                                        </Typography>
+                                                        {stall.user?.contact && (
+                                                            <IconButton
+                                                                size="small"
+                                                                component="a"
+                                                                href={`https://wa.me/${stall.user.contact.replace(/[^0-9]/g, '')}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                sx={{
+                                                                    color: '#25D366',
+                                                                    padding: '2px',
+                                                                    '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.1)' }
+                                                                }}
+                                                            >
+                                                                <WhatsAppIcon sx={{ fontSize: '1.2rem' }} />
+                                                            </IconButton>
+                                                        )}
+                                                    </Stack>
+                                                </Box>
+                                            </Stack>
+                                        </Box>
+
+                                        <Box>
+                                            <Stack direction="row" spacing={1.5} alignItems="center">
+                                                <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.light', color: 'secondary.main' }}>
+                                                    <EmailIcon sx={{ fontSize: '1.2rem' }} />
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="caption" display="block" color="text.secondary">Email Address</Typography>
+                                                    <Typography
+                                                        variant="body2"
+                                                        component="a"
+                                                        href={`mailto:${stall.user?.email}`}
+                                                        sx={{
+                                                            fontWeight: 600,
+                                                            fontSize: stall.user?.email && stall.user.email.length > 20 ? '0.75rem' : '0.875rem',
+                                                            color: 'inherit',
+                                                            textDecoration: 'none',
+                                                            '&:hover': { color: 'primary.main', textDecoration: 'underline' }
+                                                        }}
+                                                    >
+                                                        {stall.user?.email || 'Not provided'}
+                                                    </Typography>
+                                                </Box>
+                                            </Stack>
                                         </Box>
                                     </Stack>
                                 </CardContent>

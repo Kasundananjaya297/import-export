@@ -33,6 +33,12 @@ export interface Product {
   feedingFrequency?: string;
   video?: string;
   stallId?: number;
+  user?: {
+    fname?: string;
+    lname?: string;
+    email?: string;
+    contact?: string;
+  };
   stall?: {
     id: number;
     stallName: string;
@@ -49,6 +55,12 @@ export interface Stall {
   status: string;
   createdAt: string;
   updatedAt: string;
+  user?: {
+    fname: string;
+    lname: string;
+    email: string;
+    contact: string;
+  };
 }
 
 export interface AddProductData {
